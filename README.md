@@ -6,8 +6,8 @@ A database‑driven academic resource hub for IUT student
 CocoNote is a university-focused web platform where students can upload, share, download, and upvote academic notes.
 It is designed as a DBMS-centric project, featuring:
 
--Multi-table entity relationships
--Junction tables for many-to-many connections
+*Multi-table entity relationships
+*Junction tables for many-to-many connections
 -Complex SQL joins, triggers, and stored procedures
 -Automated badge awarding
 -Usage statistics and analytics
