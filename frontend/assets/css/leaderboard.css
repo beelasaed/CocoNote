@@ -1,0 +1,100 @@
+/* --- FIXED GLOBAL NAVIGATION --- */
+.upper-nav {
+    background-color: var(--coco-white);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 0 2rem;
+    height: 70px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+.nav-content { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+.nav-left, .nav-right { flex: 1; display: flex; align-items: center; }
+.nav-center { flex: 2; display: flex; justify-content: center; gap: 2rem; }
+.nav-right { justify-content: flex-end; gap: 1.2rem; }
+.nav-logo { font-size: 1.5rem; font-weight: 700; color: var(--coco-earth); text-decoration: none; }
+.nav-link { text-decoration: none; color: var(--coco-brown); font-weight: 500; font-size: 0.95rem; padding: 0.5rem 0; transition: 0.3s; border-bottom: 2px solid transparent; }
+.nav-link.active { color: var(--coco-gold); border-bottom: 2px solid var(--coco-gold); }
+
+/* Icons */
+.icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; position: relative; display: flex; align-items: center; }
+.dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: #e63946; border-radius: 50%; border: 2px solid white; }
+.profile-circle { background: var(--coco-gold); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.logout-btn { background: none; border: 1px solid var(--coco-earth); color: var(--coco-earth); padding: 0.4rem 0.9rem; border-radius: 0.6rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+
+/* --- LEADERBOARD PAGE --- */
+.leaderboard-body { background-color: var(--coco-cream); margin: 0; font-family: 'Inter', sans-serif; }
+.leaderboard-main { max-width: 1000px; margin: 3rem auto; padding: 0 2rem; }
+.leaderboard-header { text-align: center; margin-bottom: 3rem; }
+.earthy-title { color: var(--coco-earth); font-size: 2.2rem; margin-bottom: 0.5rem; }
+
+/* Podium Layout */
+.podium-section {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+}
+.podium-item {
+    text-align: center;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.avatar-box { font-size: 3rem; margin-bottom: 0.5rem; }
+.dept-tag { font-size: 0.75rem; font-weight: 700; color: var(--coco-gold); text-transform: uppercase; }
+.points-pill {
+    background: var(--coco-white);
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.rank-bar {
+    width: 100%;
+    border-radius: 1rem 1rem 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+}
+.gold .rank-bar { background: linear-gradient(to top, #D4A373, #E9C46A); }
+.silver .rank-bar { background: linear-gradient(to top, #8d99ae, #adb5bd); }
+.bronze .rank-bar { background: linear-gradient(to top, #a67c52, #bc8a5f); }
+
+/* Ranking Card */
+.ranking-card {
+    background: var(--coco-white);
+    border-radius: 2rem;
+    padding: 2rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+}
+.ranking-list-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 120px;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    font-weight: 700;
+    color: var(--coco-earth);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+.rank-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 120px;
+    padding: 1.2rem 1rem;
+    border-bottom: 1px solid #f9f9f9;
+    align-items: center;
+    transition: 0.2s;
+}
+.rank-row:hover { background: var(--coco-cream); border-radius: 1rem; }
+.rank-number { font-weight: 800; color: var(--coco-gold); }
+.rank-points { font-weight: 700; color: var(--coco-earth); }

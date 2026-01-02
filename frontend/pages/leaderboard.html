@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CocoNote - Leaderboard</title>
+    <link rel="stylesheet" href="../assets/css/variable.css">
+    <link rel="stylesheet" href="../assets/css/leaderboard.css">
+</head>
+<body class="leaderboard-body">
+
+    <nav class="upper-nav">
+        <div class="nav-content">
+            <div class="nav-left">
+                <a href="dashboard.html" class="nav-logo">🥥 CocoNote</a>
+            </div>
+            
+            <div class="nav-center">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="feed.html" class="nav-link">Feed</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+            </div>
+
+            <div class="nav-right">
+                <button id="theme-toggle" class="icon-btn">🌓</button>
+                <button class="icon-btn">🔔<span class="dot"></span></button>
+                <a href="profile.html" class="profile-circle">👤</a>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="leaderboard-main">
+        <header class="leaderboard-header animate-up">
+            <h1 class="earthy-title">Top Contributors</h1>
+            <p>Earning points by sharing quality notes and helping others.</p>
+        </header>
+
+        <section class="podium-section animate-up">
+            <div class="podium-item silver">
+                <div class="avatar-box">🥈</div>
+                <h3>Samiul_19</h3>
+                <span class="dept-tag">ME</span>
+                <div class="points-pill">2,450 🥥</div>
+                <div class="rank-bar" style="height: 100px;">2nd</div>
+            </div>
+
+            <div class="podium-item gold">
+                <div class="avatar-box">🥇</div>
+                <h3>Anika_Tabs</h3>
+                <span class="dept-tag">CSE</span>
+                <div class="points-pill">3,820 🥥</div>
+                <div class="rank-bar" style="height: 140px;">1st</div>
+            </div>
+
+            <div class="podium-item bronze">
+                <div class="avatar-box">🥉</div>
+                <h3>Fahim_IUT</h3>
+                <span class="dept-tag">CEE</span>
+                <div class="points-pill">1,980 🥥</div>
+                <div class="rank-bar" style="height: 80px;">3rd</div>
+            </div>
+        </section>
+
+        <section class="ranking-card animate-up" style="animation-delay: 0.2s;">
+            <div class="ranking-list-header">
+                <span>Rank</span>
+                <span>Contributor</span>
+                <span class="hide-mobile">Department</span>
+                <span>Points</span>
+            </div>
+            <div id="ranking-list-container">
+                </div>
+        </section>
+    </main>
+
+    <script src="../screens/leaderboard.js"></script>
+</body>
+</html>

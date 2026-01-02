@@ -1,0 +1,31 @@
+/* Similar to login but adjusted for longer forms */
+body.register-body {
+    background-color: var(--coco-beige);
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 0; /* Extra space for scrolling on small screens */
+}
+
+.register-card {
+    background: var(--white);
+    width: 100%;
+    max-width: 450px; /* Slightly wider */
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-xl);
+}
+
+/* Reuse the same component styles as login.css by importing them or repeating them */
+/* For a production app, you might put shared 'auth' styles in one file */
+.form-group { margin-bottom: 1.2rem; }
+.form-group label { display: block; color: var(--coco-brown); margin-bottom: 0.4rem; font-weight: 500; }
+.form-group input { 
+    width: 100%; padding: 0.75rem; border: 1px solid #ddd; 
+    border-radius: 0.75rem; background: var(--coco-cream); box-sizing: border-box;
+}
+.auth-btn { width: 100%; background: var(--coco-gold); color: white; padding: 0.8rem; border: none; border-radius: 0.75rem; cursor: pointer; font-weight: 600; }
+.link-gold { color: var(--coco-gold); text-decoration: none; font-weight: 500; }

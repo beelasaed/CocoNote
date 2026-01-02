@@ -1,0 +1,6 @@
+.app-container { display: flex; min-height: 100vh; }
+.sidebar { width: 260px; background: var(--bg-light-beige); border-right: 1px solid var(--bg-soft-tan); padding: 2rem 1.5rem; position: fixed; height: 100vh; }
+.main-content { margin-left: 260px; flex: 1; padding: 2rem 3rem; }
+.top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.search-bar { background: var(--white); border: 1px solid var(--soft-gold); padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; width: 400px; }
+.search-bar input { border: none; outline: none; margin-left: 10px; width: 100%; }
