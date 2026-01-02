@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CocoNote - Dashboard</title>
+    <link rel="stylesheet" href="../assets/css/variable.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="dashboard-body">
+
+    <nav class="upper-nav">
+        <div class="nav-content">
+            <div class="nav-left">
+                <span class="nav-logo">🥥 CocoNote</span>
+            </div>
+            
+            <div class="nav-center">
+                <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="feed.html" class="nav-link">Feed</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+            </div>
+
+            <div class="nav-right">
+                <button id="theme-toggle" class="icon-btn">🌓</button>
+                <button class="icon-btn">🔔<span class="dot"></span></button>
+                <a href="profile.html" class="profile-circle">👤</a>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard-main">
+        <section class="hero-section animate-up">
+            <div class="search-hero-card">
+                <h1>Find your notes</h1>
+                <div class="search-bar-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="Search by course, title, or keyword...">
+                </div>
+                
+                <div class="search-filters">
+                    <select class="filter-pill"><option>Batch</option></select>
+                    <select class="filter-pill"><option>Category</option></select>
+                    <button class="filter-pill-btn">Apply</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="dept-section animate-up" style="animation-delay: 0.1s;">
+            <h2 class="section-title">Departments</h2>
+            <div class="folder-grid">
+                <div class="folder-item" onclick="window.location.href='feed.html?dept=CSE'">
+                    <div class="folder-icon-wrapper">📂</div>
+                    <span>CSE</span>
+                </div>
+                <div class="folder-item" onclick="window.location.href='feed.html?dept=ME'">
+                    <div class="folder-icon-wrapper">📂</div>
+                    <span>ME</span>
+                </div>
+                <div class="folder-item" onclick="window.location.href='feed.html?dept=CEE'">
+                    <div class="folder-icon-wrapper">📂</div>
+                    <span>CEE</span>
+                </div>
+                <div class="folder-item" onclick="window.location.href='feed.html?dept=BTM'">
+                    <div class="folder-icon-wrapper">📂</div>
+                    <span>BTM</span>
+                </div>
+                <div class="folder-item" onclick="window.location.href='feed.html?dept=EEE'">
+                    <div class="folder-icon-wrapper">📂</div>
+                    <span>EEE</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../screens/dashboard.js"></script>
+</body>
+</html>

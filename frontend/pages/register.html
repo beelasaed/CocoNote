@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CocoNote - Create Account</title>
+    <link rel="stylesheet" href="../assets/css/variable.css">
+    <link rel="stylesheet" href="../assets/css/register.css">
+</head>
+<body class="register-body">
+    <div class="register-card animate-up">
+        <div style="text-align: center;">
+            <h1 style="color: var(--coco-brown); font-size: 2rem; margin: 0;">🥥 CocoNote</h1>
+            <h2 style="color: var(--coco-brown); font-size: 1.5rem; margin: 0.5rem 0;">Create Account</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Join our study community</p>
+        </div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="fullname" placeholder="John Doe" required>
+            </div>
+            <div class="form-group">
+                <label>IUT Email</label>
+                <input type="email" id="email" placeholder="your.name@iut.edu" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn" style="margin-top: 1rem;">Register</button>
+        </form>
+
+        <p style="text-align: center; color: var(--text-muted); margin-top: 1.5rem;">
+            Already have an account? <a href="login.html" class="link-gold">Login here</a>
+        </p>
+    </div>
+    <script src="../screens/register.js"></script>
+</body>
+</html>

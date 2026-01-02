@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CocoNote - Login</title>
+    <link rel="stylesheet" href="../assets/css/variable.css">
+    <link rel="stylesheet" href="../assets/css/login.css">
+</head>
+<body class="login-body">
+    <div class="auth-card animate-up">
+        <h1 class="brand-title">🥥 CocoNote</h1>
+        <h2 class="welcome-text">Welcome Back</h2>
+        <p class="subtitle">Login to access your notes</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>IUT Email</label>
+                <input type="email" id="email" placeholder="your.name@iut.edu" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <div class="forgot-link">
+                <a href="#" class="link-gold">Forgot Password?</a>
+            </div>
+            <button type="submit" class="auth-btn">Login</button>
+        </form>
+
+        <p class="subtitle" style="margin-top: 2rem;">
+            Don't have an account? <a href="register.html" class="link-gold">Register here</a>
+        </p>
+    </div>
+    <script src="../screens/login.js"></script>
+</body>
+</html>

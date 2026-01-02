@@ -1,0 +1,94 @@
+/* Coconut Color Palette */
+:root {
+    --coco-brown: #5A4A3A;      /* Rich shell brown */
+    --coco-gold: #D4A373;       /* Soft gold/husk color */
+    --coco-gold-hover: #bc8a5f; /* Deepened gold */
+    --coco-beige: #F5EBE0;      /* Soft beige background */
+    --coco-cream: #FEFAE0;      /* Input background */
+    --white: #ffffff;
+}
+
+.login-page {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--coco-beige);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.login-card {
+    background-color: var(--white);
+    width: 100%;
+    max-width: 400px;
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* Header styling */
+.text-center { text-align: center; margin-bottom: 2rem; }
+.brand-name { color: var(--coco-brown); font-size: 2.5rem; margin-bottom: 0.5rem; }
+.welcome-text { color: var(--coco-brown); font-size: 1.5rem; margin: 0; }
+.subtitle { color: #8d99ae; margin-top: 0.5rem; font-size: 0.95rem; }
+
+/* Input Styling */
+.form-group { margin-bottom: 1.5rem; }
+label { display: block; color: var(--coco-brown); margin-bottom: 0.5rem; font-weight: 500; }
+
+input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e0e0e0;
+    background-color: var(--coco-cream);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--coco-gold);
+    box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.2);
+}
+
+/* Gold Button Styling (matches motion.button) */
+.login-btn {
+    width: 100%;
+    background-color: var(--coco-gold);
+    color: white;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(212, 163, 115, 0.3);
+    transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.login-btn:hover {
+    background-color: var(--coco-gold-hover);
+    transform: scale(1.02);
+}
+
+.login-btn:active {
+    transform: scale(0.98);
+}
+
+/* Footer Links */
+.forgot-pass { text-align: right; margin-bottom: 1.5rem; }
+.link-gold { color: var(--coco-gold); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+.link-gold:hover { color: var(--coco-gold-hover); text-decoration: underline; }
+
+/* Animation (matches motion.div initial/animate) */
+.animate-up {
+    animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

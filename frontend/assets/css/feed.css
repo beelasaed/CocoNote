@@ -1,0 +1,104 @@
+/* --- FIXED GLOBAL NAVIGATION --- */
+.upper-nav {
+    background-color: var(--coco-white);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 0 2rem; /* Vertical padding handled by height */
+    height: 70px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.nav-content {
+    width: 100%;
+    max-width: 1200px; /* Same max-width for every page */
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-left { flex: 1; display: flex; align-items: center; }
+.nav-center { flex: 2; display: flex; justify-content: center; gap: 2rem; }
+.nav-right { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 1.2rem; }
+
+.nav-logo { font-size: 1.5rem; font-weight: 700; color: var(--coco-earth); text-decoration: none; }
+
+.nav-link {
+    text-decoration: none;
+    color: var(--coco-brown);
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    transition: 0.3s;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover { color: var(--coco-gold); }
+.nav-link.active { color: var(--coco-gold); border-bottom: 2px solid var(--coco-gold); }
+
+/* Icons & Buttons */
+.icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; position: relative; padding: 0; display: flex; align-items: center; }
+.dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: #e63946; border-radius: 50%; border: 2px solid white; }
+.profile-circle { background: var(--coco-gold); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.logout-btn { background: none; border: 1px solid var(--coco-earth); color: var(--coco-earth); padding: 0.4rem 0.9rem; border-radius: 0.6rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+
+/* --- FEED CONTENT STYLES --- */
+.feed-body { background-color: var(--coco-cream); margin: 0; font-family: 'Inter', sans-serif; }
+.feed-main-content { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+.earthy-title { color: var(--coco-earth); font-size: 2.2rem; text-align: center; margin-bottom: 2rem; }
+
+/* Filter Card - Floating Look */
+.filter-card-system {
+    background: var(--coco-white);
+    padding: 2rem;
+    border-radius: 2rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+    margin-bottom: 3rem;
+}
+
+.search-row input {
+    width: 100%; padding: 1rem 1.5rem; border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.05); background: var(--coco-cream);
+    margin-bottom: 1rem; font-size: 1rem; box-sizing: border-box;
+}
+
+.filter-row { display: flex; gap: 1rem; }
+.coco-select {
+    flex: 1; padding: 0.8rem; border-radius: 0.8rem;
+    border: 1px solid var(--coco-gold); background: white; color: var(--coco-brown);
+}
+
+.btn-filter-apply {
+    background: var(--coco-earth); color: white; border: none;
+    padding: 0 2rem; border-radius: 0.8rem; font-weight: 600; cursor: pointer;
+}
+
+/* Card Grids */
+.popular-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem; margin-bottom: 3rem;
+}
+
+.popular-card {
+    background: var(--coco-white); border: 3px solid var(--coco-gold);
+    padding: 1.5rem; border-radius: 1.5rem; transition: 0.3s;
+}
+
+.note-row-card {
+    background: var(--coco-white); padding: 1.2rem 2rem; border-radius: 1.2rem;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 1rem;
+}
+
+/* Buttons in Row */
+.note-btns { display: flex; gap: 0.5rem; }
+.btn-coco-earth {
+    background: var(--coco-earth); color: white; border: none;
+    padding: 0.6rem 1.2rem; border-radius: 0.6rem; cursor: pointer;
+}
