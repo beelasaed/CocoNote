@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CocoNote - My Profile</title>
+    <link rel="stylesheet" href="../assets/css/variable.css">
+    <link rel="stylesheet" href="../assets/css/profile.css">
+</head>
+<body class="profile-body">
+
+    <nav class="upper-nav">
+        <div class="nav-content">
+            <div class="nav-left">
+                <a href="dashboard.html" class="nav-logo">🥥 CocoNote</a>
+            </div>
+            
+            <div class="nav-center">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="feed.html" class="nav-link">Feed</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+            </div>
+
+            <div class="nav-right">
+                <button id="theme-toggle" class="icon-btn">🌓</button>
+                <button class="icon-btn">🔔<span class="dot"></span></button>
+                <a href="profile.html" class="profile-circle active-profile">👤</a>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="profile-container">
+        <section class="user-info-card animate-up">
+            <div class="profile-meta">
+                <div class="large-avatar">👤</div>
+                <div class="user-details">
+                    <h1>Anika Tabassum</h1>
+                    <p>CSE Department • Batch 21</p>
+                    <button class="btn-edit-profile">Edit Profile</button>
+                </div>
+            </div>
+            
+            <div class="user-stats-bar">
+                <div class="stat-box">
+                    <span class="stat-num">3,820</span>
+                    <span class="stat-label">Total 🥥 Points</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num">14</span>
+                    <span class="stat-label">Notes Uploaded</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num">1.2k</span>
+                    <span class="stat-label">Total Downloads</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="badges-card animate-up" style="animation-delay: 0.1s;">
+            <h3 class="section-subtitle">Achievements</h3>
+            <div class="badges-grid">
+                <div class="badge-item tooltip" data-tip="Uploaded 10+ high-quality notes">
+                    <div class="badge-icon gold-glow">🌟</div>
+                    <span>Top Contributor</span>
+                </div>
+                <div class="badge-item tooltip" data-tip="Joined the community in Batch 21">
+                    <div class="badge-icon">🥥</div>
+                    <span>Early Nut</span>
+                </div>
+                <div class="badge-item tooltip" data-tip="Note reached 100+ downloads">
+                    <div class="badge-icon silver-glow">🔥</div>
+                    <span>Viral Author</span>
+                </div>
+                <div class="badge-item locked" data-tip="Earn 5,000 points to unlock">
+                    <div class="badge-icon">🔒</div>
+                    <span>Coco-Legend</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-content-card animate-up" style="animation-delay: 0.2s;">
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="my-uploads">My Uploads</button>
+                <button class="tab-btn" data-tab="saved-notes">Saved Notes</button>
+            </div>
+
+            <div id="tab-content" class="tab-content">
+                </div>
+        </section>
+    </main>
+
+    <script src="../screens/profile.js"></script>
+</body>
+</html>

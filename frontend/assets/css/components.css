@@ -1,0 +1,7 @@
+.btn-gold { background: var(--soft-gold); color: var(--white); padding: 12px 24px; border-radius: 8px; font-weight: 600; transition: var(--transition); }
+.btn-gold:hover { background: var(--bg-soft-tan); }
+.note-card { background: var(--white); border: 1.5px solid var(--soft-gold); border-radius: 12px; padding: 20px; transition: var(--transition); }
+.note-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+.badge-item { background: var(--bg-soft-tan); color: var(--earth-brown); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+.dept-link { display: flex; align-items: center; padding: 12px; color: var(--earth-brown); border-radius: 8px; margin-bottom: 5px; transition: var(--transition); }
+.dept-link:hover { background: var(--earth-brown); color: var(--white); }

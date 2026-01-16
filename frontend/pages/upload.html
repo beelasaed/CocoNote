@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CocoNote - Upload Note</title>
+    <link rel="stylesheet" href="../assets/css/variable.css">
+    <link rel="stylesheet" href="../assets/css/upload.css">
+</head>
+<body class="upload-body">
+
+    <nav class="upper-nav">
+        <div class="nav-content">
+            <div class="nav-left">
+                <span class="nav-logo">🥥 CocoNote</span>
+            </div>
+            
+            <div class="nav-center">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="feed.html" class="nav-link">Feed</a>
+                <a href="upload.html" class="nav-link active">Upload</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+            </div>
+
+            <div class="nav-right">
+                <button id="theme-toggle" class="icon-btn">🌓</button>
+                <button class="icon-btn">🔔<span class="dot"></span></button>
+                <a href="profile.html" class="profile-circle">👤</a>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="upload-container">
+        <div class="upload-card animate-up">
+            <header class="upload-header">
+                <h2>📤 Share Your Notes</h2>
+                <p>Help your fellow students by uploading quality materials.</p>
+            </header>
+
+            <form id="upload-form">
+                <div class="drop-zone" id="drop-zone">
+                    <span class="drop-zone-icon">📄</span>
+                    <p class="drop-zone-text">Drag & Drop files here or <span>Browse</span></p>
+                    <input type="file" id="file-input" hidden multiple>
+                    <div id="file-list" class="file-preview-list"></div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Note Title</label>
+                        <input type="text" placeholder="e.g. Database Normalization Guide" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Course Code</label>
+                        <input type="text" placeholder="e.g. CSE 3501" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <select required>
+                            <option value="">Select Dept</option>
+                            <option value="CSE">CSE</option>
+                            <option value="ME">ME</option>
+                            <option value="CEE">CEE</option>
+                            <option value="BTM">BTM</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select required>
+                            <option value="">Select Type</option>
+                            <option value="Slides">Lecture Slides</option>
+                            <option value="Lab">Lab Reports</option>
+                            <option value="Papers">Past Papers</option>
+                            <option value="Books">Reference Books</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit-upload">Upload to Feed</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="../screens/upload.js"></script>
+</body>
+</html>
