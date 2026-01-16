@@ -1,5 +1,22 @@
+-- 1. Independent Tables (Must come first) --
+CREATE TABLE department (
+    department_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
 
--- Users Table--
+CREATE TABLE category (
+    category_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE badge (
+    badge_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    description VARCHAR(255),
+    points_required INT DEFAULT 0
+);
+
+-- 2. Dependent Tables (Reference the tables above) --
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -11,27 +28,15 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Department Table--
-CREATE TABLE department (
-    department_id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
-);
-
--- Course Table--
 CREATE TABLE course (
+    
     course_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     code VARCHAR(20) UNIQUE NOT NULL,
     department_id INT REFERENCES department(department_id)
 );
 
--- Category Table--
-CREATE TABLE category (
-    category_id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
-);
-
--- Notes Table--
+-- 3. Note Table (References Course, Category, Users) --
 CREATE TABLE note (
     note_id SERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
@@ -45,7 +50,7 @@ CREATE TABLE note (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Downloads Table--
+-- 4. Action Tables (Reference Note and Users) --
 CREATE TABLE download (
     download_id SERIAL PRIMARY KEY,
     note_id INT REFERENCES note(note_id) ON DELETE CASCADE,
@@ -53,7 +58,6 @@ CREATE TABLE download (
     downloaded_at TIMESTAMP DEFAULT NOW()
 );
 
--- Upvotes Table--
 CREATE TABLE upvote (
     upvote_id SERIAL PRIMARY KEY,
     note_id INT REFERENCES note(note_id) ON DELETE CASCADE,
@@ -62,15 +66,6 @@ CREATE TABLE upvote (
     UNIQUE (note_id, user_id)
 );
 
--- Badge Table--
-CREATE TABLE badge (
-    badge_id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    description VARCHAR(255),
-    points_required INT DEFAULT 0
-);
-
--- User-Badge Junction Table--
 CREATE TABLE user_badge (
     user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
     badge_id INT REFERENCES badge(badge_id) ON DELETE CASCADE,

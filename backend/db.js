@@ -1,22 +1,26 @@
-require("dotenv").config(); // loads variables from .env
 const { Pool } = require("pg");
 
-// create a connection pool
+// Direct connection setup (Bypassing .env for testing)
 const pool = new Pool({
-  host: process.env.DB_HOST,      // e.g., localhost
-  port: process.env.DB_PORT,      // e.g., 5432
-  user: process.env.DB_USER,      // e.g., postgres
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,  // your CocoNote database
+  user: "postgres",           // Your Postgres username
+  password: "SalsabilSaed1234", // Your verified password
+  host: "127.0.0.1",          // Using IP instead of 'localhost' is safer on Windows
+  port: 5432,
+  database: "CocoNoteDB",     // Your database name
 });
 
-// optional: test connection immediately
+// Test the connection immediately when the app starts
 pool.connect((err, client, release) => {
   if (err) {
-    return console.error("Error acquiring client", err.stack);
+    console.error("________________________________________");
+    console.error("🔴 DATABASE CONNECTION FAILED:", err.message);
+    console.error("________________________________________");
+  } else {
+    console.log("________________________________________");
+    console.log("🟢 SUCCESSFULLY CONNECTED TO POSTGRES!");
+    console.log("________________________________________");
+    release();
   }
-  console.log("Connected to PostgreSQL database:", process.env.DB_NAME);
-  release(); // release connection back to pool
 });
 
 module.exports = pool;
