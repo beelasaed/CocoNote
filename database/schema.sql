@@ -16,10 +16,21 @@ CREATE TABLE badge (
     points_required INT DEFAULT 0
 );
 
+-- NEW: Table to store the list of allowed Student IDs from the university
+-- (This acts as the "White List" for registration)
+CREATE TABLE valid_student_ids (
+    student_id VARCHAR(20) PRIMARY KEY
+);
+
 -- 2. Dependent Tables (Reference the tables above) --
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    
+    -- NEW: Link to the valid_student_ids table
+    -- We added this WITHOUT changing any of your existing columns
+    student_id VARCHAR(20) UNIQUE NOT NULL REFERENCES valid_student_ids(student_id),
+    
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     batch INT,
@@ -29,7 +40,6 @@ CREATE TABLE users (
 );
 
 CREATE TABLE course (
-    
     course_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     code VARCHAR(20) UNIQUE NOT NULL,
