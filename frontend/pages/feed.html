@@ -44,25 +44,31 @@
                         <option value="">Batch</option>
                         <option value="19">19</option>
                         <option value="20">20</option>
+                        <option value="21">21</option>
+                        <option value="22">22</option>
                     </select>
                     <select id="cat-filter" class="coco-select">
                         <option value="">Category</option>
-                        <option value="Slides">Slides</option>
-                        <option value="Papers">Papers</option>
+                        <option value="Slides">Lecture Slides</option>
+                        <option value="Papers">Past Papers</option>
+                        <option value="Lab">Lab Reports</option>
+                        <option value="Books">Reference Books</option>
                     </select>
-                    <button class="btn-filter-apply">Filter</button>
+                    <button class="btn-filter-apply" onclick="applyFilters()">Filter</button>
                 </div>
             </div>
         </header>
 
         <section class="notes-section animate-up">
             <h2 class="section-subtitle">🔥 Popular Notes</h2>
-            <div class="popular-grid" id="popular-notes-container"></div>
+            <div class="popular-grid" id="popular-notes-container">
+                </div>
         </section>
 
         <section class="notes-section animate-up" style="animation-delay: 0.2s;">
             <h2 class="section-subtitle">📚 All Notes</h2>
-            <div class="all-notes-list" id="all-notes-container"></div>
+            <div class="all-notes-list" id="all-notes-container">
+                </div>
         </section>
     </main>
 

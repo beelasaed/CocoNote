@@ -1,5 +1,6 @@
 -- 1. Independent Tables (Must come first) --
-CREATE TABLE department (
+
+CREATE TABLE departments (
     department_id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
 );
@@ -16,25 +17,21 @@ CREATE TABLE badge (
     points_required INT DEFAULT 0
 );
 
--- NEW: Table to store the list of allowed Student IDs from the university
--- (This acts as the "White List" for registration)
+-- Whitelist for valid Student IDs
 CREATE TABLE valid_student_ids (
     student_id VARCHAR(20) PRIMARY KEY
 );
 
 -- 2. Dependent Tables (Reference the tables above) --
+
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    
-    -- NEW: Link to the valid_student_ids table
-    -- We added this WITHOUT changing any of your existing columns
     student_id VARCHAR(20) UNIQUE NOT NULL REFERENCES valid_student_ids(student_id),
-    
     email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     batch INT,
-    department_id INT REFERENCES department(department_id),
+    department_id INT REFERENCES departments(department_id),
     total_points INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -43,13 +40,19 @@ CREATE TABLE course (
     course_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     code VARCHAR(20) UNIQUE NOT NULL,
-    department_id INT REFERENCES department(department_id)
+    department_id INT REFERENCES departments(department_id)
 );
 
--- 3. Note Table (References Course, Category, Users) --
+-- 3. Note Table (UPDATED with new columns) --
 CREATE TABLE note (
     note_id SERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
+    
+    -- NEW COLUMNS ADDED HERE
+    description TEXT,
+    batch VARCHAR(10),
+    department_id INT REFERENCES departments(department_id),
+    
     course_id INT REFERENCES course(course_id),
     category_id INT REFERENCES category(category_id),
     uploader_id INT REFERENCES users(user_id),
@@ -60,7 +63,7 @@ CREATE TABLE note (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 4. Action Tables (Reference Note and Users) --
+-- 4. Action Tables --
 CREATE TABLE download (
     download_id SERIAL PRIMARY KEY,
     note_id INT REFERENCES note(note_id) ON DELETE CASCADE,
