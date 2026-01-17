@@ -18,7 +18,7 @@ exports.getUploadOptions = async (req, res) => {
     }
 };
 
-// --- 2. Upload Note ---
+// --- 2. Upload Note (UPDATED: Uses Stored Procedure) ---
 exports.uploadNote = async (req, res) => {
     try {
         if (!req.file) {
@@ -29,17 +29,16 @@ exports.uploadNote = async (req, res) => {
         const uploader_id = req.user.user_id; 
         const filePath = '/uploads/' + req.file.filename;
 
-        const newNote = await pool.query(
-            `INSERT INTO note 
-            (title, description, batch, department_id, course_id, category_id, uploader_id, file_path) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-            RETURNING *`,
+        // CALLING THE STORED PROCEDURE
+        // Instead of writing "INSERT INTO...", we call the function we defined in procedures.sql
+        const result = await pool.query(
+            `SELECT * FROM upload_new_note($1, $2, $3, $4, $5, $6, $7, $8)`,
             [title, description, batch, department_id, course_id, category_id, uploader_id, filePath]
         );
 
         res.status(201).json({ 
             message: "Note uploaded successfully!", 
-            note: newNote.rows[0] 
+            note: result.rows[0] 
         });
 
     } catch (err) {
@@ -48,23 +47,12 @@ exports.uploadNote = async (req, res) => {
     }
 };
 
-// --- 3. Get All Notes for Feed ---
+// --- 3. Get All Notes for Feed (UPDATED: Uses View) ---
 exports.getAllNotes = async (req, res) => {
     try {
-        const query = `
-            SELECT n.note_id, n.title, n.description, n.file_path, n.created_at, n.batch,
-                   n.upvotes, n.downloads, 
-                   u.name AS uploader, 
-                   c.code AS course, 
-                   d.name AS department, 
-                   cat.name AS category
-            FROM note n
-            JOIN users u ON n.uploader_id = u.user_id
-            JOIN course c ON n.course_id = c.course_id
-            JOIN departments d ON n.department_id = d.department_id
-            JOIN category cat ON n.category_id = cat.category_id
-            ORDER BY n.created_at DESC
-        `;
+        // SELECTING FROM THE VIEW
+        // The complex JOIN logic is now hidden inside 'view_feed_details' (database/views.sql)
+        const query = `SELECT * FROM view_feed_details ORDER BY created_at DESC`;
         
         const result = await pool.query(query);
         res.json(result.rows);
