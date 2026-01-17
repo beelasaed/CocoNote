@@ -2,7 +2,7 @@
 .upper-nav {
     background-color: var(--coco-white);
     border-bottom: 1px solid rgba(0,0,0,0.05);
-    padding: 0 2rem; /* Vertical padding handled by height */
+    padding: 0 2rem; 
     height: 70px;
     position: sticky;
     top: 0;
@@ -15,7 +15,7 @@
 
 .nav-content {
     width: 100%;
-    max-width: 1200px; /* Same max-width for every page */
+    max-width: 1200px; 
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -88,6 +88,7 @@
 .popular-card {
     background: var(--coco-white); border: 3px solid var(--coco-gold);
     padding: 1.5rem; border-radius: 1.5rem; transition: 0.3s;
+    display: flex; flex-direction: column;
 }
 
 .note-row-card {
@@ -96,9 +97,93 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 1rem;
 }
 
-/* Buttons in Row */
+/* --- TYPOGRAPHY & HIERARCHY FIX --- */
+.note-info h4 {
+    font-size: 1.25rem; /* Larger Title */
+    font-weight: 700;
+    color: var(--coco-earth);
+    margin: 0 0 6px 0;
+}
+
+.note-meta {
+    font-size: 0.9rem; /* Smaller Meta Data */
+    color: #666;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.uploader-info {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 6px;
+}
+
+/* Tags */
+.category-tag {
+    background: var(--coco-cream); color: var(--coco-earth);
+    padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
+    text-transform: uppercase;
+}
+.category-tag.small { font-size: 0.7rem; padding: 2px 8px; }
+
+/* Buttons */
 .note-btns { display: flex; gap: 0.5rem; }
 .btn-coco-earth {
     background: var(--coco-earth); color: white; border: none;
-    padding: 0.6rem 1.2rem; border-radius: 0.6rem; cursor: pointer;
+    padding: 0.6rem 1.2rem; border-radius: 0.6rem; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-coco-earth:hover { opacity: 0.9; }
+
+/* --- AESTHETIC STATS (Side-by-Side Pill Design) --- */
+
+.stats-row-aesthetic, 
+.stats-group-aesthetic {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+/* The Stat Pill Style */
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--coco-cream, #FDFBF7); 
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--coco-brown, #5C4B3F);
+}
+.stat-pill .icon { font-size: 1.1em; }
+
+/* Minimal Pill for List View */
+.stat-pill.minimal {
+    background: transparent;
+    border: 1px solid #eee;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+}
+
+.note-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px; 
+}
+
+.btn-group { display: flex; align-items: center; gap: 10px; }
+.btn-coco-earth.small { padding: 6px 16px; font-size: 0.85rem; }
+
+.btn-coco-save {
+    background: var(--coco-cream);
+    border: none;
+    width: 35px; height: 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
 }

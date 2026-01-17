@@ -26,8 +26,6 @@ exports.uploadNote = async (req, res) => {
         }
 
         const { title, description, batch, department_id, course_id, category_id } = req.body;
-        
-        // 'req.user' is populated by your existing 'protect' middleware
         const uploader_id = req.user.user_id; 
         const filePath = '/uploads/' + req.file.filename;
 
@@ -47,5 +45,32 @@ exports.uploadNote = async (req, res) => {
     } catch (err) {
         console.error("Upload Error:", err);
         res.status(500).json({ message: "Database Error: Could not save note." });
+    }
+};
+
+// --- 3. Get All Notes for Feed ---
+exports.getAllNotes = async (req, res) => {
+    try {
+        const query = `
+            SELECT n.note_id, n.title, n.description, n.file_path, n.created_at, n.batch,
+                   n.upvotes, n.downloads, 
+                   u.name AS uploader, 
+                   c.code AS course, 
+                   d.name AS department, 
+                   cat.name AS category
+            FROM note n
+            JOIN users u ON n.uploader_id = u.user_id
+            JOIN course c ON n.course_id = c.course_id
+            JOIN departments d ON n.department_id = d.department_id
+            JOIN category cat ON n.category_id = cat.category_id
+            ORDER BY n.created_at DESC
+        `;
+        
+        const result = await pool.query(query);
+        res.json(result.rows);
+
+    } catch (err) {
+        console.error("Error fetching notes:", err);
+        res.status(500).json({ message: "Server Error fetching feed" });
     }
 };

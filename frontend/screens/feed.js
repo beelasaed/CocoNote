@@ -3,13 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const dept = params.get('dept') || 'All';
     const deptTitle = document.getElementById('dept-title-heading');
     
-    // Set Header Title
     if(deptTitle) deptTitle.innerText = `${dept} Department Notes`;
 
-    // 1. Initialize Fetching
     fetchNotes();
 
-    // 2. Attach Event Listeners for Filters
     const searchInput = document.getElementById('note-search');
     const batchFilter = document.getElementById('batch-filter');
     const catFilter = document.getElementById('cat-filter');
@@ -19,16 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (catFilter) catFilter.addEventListener('change', applyFilters);
 });
 
-let allNotes = []; // Store fetched notes globally for filtering
+let allNotes = [];
 
-// --- Fetch Notes from Backend ---
 async function fetchNotes() {
     const token = localStorage.getItem('token');
-    
-    if (!token) {
-        window.location.href = 'login.html';
-        return;
-    }
+    if (!token) { window.location.href = 'login.html'; return; }
 
     try {
         const response = await fetch('/api/notes/feed', {
@@ -42,12 +34,9 @@ async function fetchNotes() {
         } else {
             console.error("Failed to fetch notes:", data.message);
         }
-    } catch (err) {
-        console.error("Error connecting to server:", err);
-    }
+    } catch (err) { console.error("Error:", err); }
 }
 
-// --- Filter Logic ---
 function applyFilters() {
     const searchTerm = document.getElementById('note-search').value.toLowerCase();
     const batchVal = document.getElementById('batch-filter').value;
@@ -57,7 +46,7 @@ function applyFilters() {
         const matchesSearch = note.title.toLowerCase().includes(searchTerm) || 
                               note.course.toLowerCase().includes(searchTerm);
         const matchesBatch = batchVal ? note.batch == batchVal : true;
-        const matchesCat = catVal ? note.category === catVal : true;
+        const matchesCat = catVal ? note.category === catVal : true; 
 
         return matchesSearch && matchesBatch && matchesCat;
     });
@@ -65,49 +54,63 @@ function applyFilters() {
     renderFeed(filtered);
 }
 
-// --- Render Logic ---
 function renderFeed(notes) {
     const popularContainer = document.getElementById('popular-notes-container');
     const allContainer = document.getElementById('all-notes-container');
 
-    // Logic: Top 3 notes with highest upvotes are "Popular"
-    // We create a copy [...notes] to avoid sorting the main array
+    // 1. POPULAR NOTES
     const popularItems = [...notes].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).slice(0, 3);
 
-    // 1. Render Popular Section
     if (popularContainer) {
         popularContainer.innerHTML = popularItems.map(n => `
             <div class="popular-card">
                 <span class="category-tag">${n.category}</span>
-                <h4 style="margin: 10px 0;">${n.title}</h4>
-                <p style="font-size: 0.8rem; color: #666;">${n.course} • Batch ${n.batch}</p>
-                <div style="margin: 15px 0; font-size: 0.9rem;">
-                    <span>🥥 ${n.upvotes || 0}</span> <span style="margin-left:10px;">⬇️ ${n.downloads || 0}</span>
+                <h4 style="margin: 12px 0; font-size: 1.25rem; font-weight: 700;">${n.title}</h4>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 12px;">${n.course} • Batch ${n.batch}</p>
+                
+                <div class="stats-row-aesthetic">
+                    <div class="stat-pill">
+                        <span class="icon">🥥</span> ${n.upvotes || 0}
+                    </div>
+                    <div class="stat-pill">
+                        <span class="icon">⬇️</span> ${n.downloads || 0}
+                    </div>
                 </div>
-                <a href="${n.file_path}" target="_blank" class="btn-coco-earth" style="display:block; text-align:center; text-decoration:none; line-height:35px;">
+
+                <a href="${n.file_path}" target="_blank" class="btn-coco-earth" style="display:block; text-align:center; text-decoration:none; margin-top:15px;">
                     Download
                 </a>
             </div>
         `).join('');
     }
 
-    // 2. Render All Notes Section
+    // 2. ALL NOTES (List View)
     if (allContainer) {
         if (notes.length === 0) {
-            allContainer.innerHTML = `<p style="text-align:center; color:#666; width:100%; padding:20px;">No notes found matching your criteria.</p>`;
+            allContainer.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">No notes found matching your criteria.</p>`;
         } else {
             allContainer.innerHTML = notes.map(n => `
                 <div class="note-row-card">
                     <div class="note-info">
                         <h4>${n.title}</h4>
-                        <div class="note-meta">${n.course} • Batch ${n.batch} • <span class="category-tag">${n.category}</span></div>
-                        <div class="note-meta" style="font-size:0.8rem; color:#888; margin-top:5px;">Uploaded by ${n.uploader}</div>
+                        <div class="note-meta">
+                            ${n.course} • Batch ${n.batch} • <span class="category-tag small">${n.category}</span>
+                        </div>
+                        <div class="uploader-info">Uploaded by ${n.uploader}</div>
                     </div>
-                    <div class="note-stats-group">
-                        <div class="stat-item">🥥 ${n.upvotes || 0}</div>
-                        <div class="stat-item">⬇️ ${n.downloads || 0}</div>
-                        <div class="note-btns">
-                            <a href="${n.file_path}" target="_blank" class="btn-coco-earth" style="text-decoration:none;">Download</a>
+                    
+                    <div class="note-actions">
+                        <div class="stats-group-aesthetic">
+                            <div class="stat-pill minimal">
+                                <span class="icon">🥥</span> ${n.upvotes || 0}
+                            </div>
+                            <div class="stat-pill minimal">
+                                <span class="icon">⬇️</span> ${n.downloads || 0}
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <a href="${n.file_path}" target="_blank" class="btn-coco-earth small" style="text-decoration:none;">Download</a>
                             <button class="btn-coco-save">🔖</button>
                         </div>
                     </div>
