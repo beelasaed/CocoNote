@@ -6,23 +6,24 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- 1. MIDDLEWARE (Security & Setup) ---
-app.use(cors()); // Fixes "Cross-Origin" errors
-app.use(express.json()); // Allows the server to read JSON data
+// --- 1. MIDDLEWARE ---
+app.use(cors()); 
+app.use(express.json()); 
 
-// --- 2. STATIC FILES (Frontend & Uploads) ---
+// --- 2. STATIC FILES ---
 app.use(express.static(path.join(__dirname, '../frontend')));
-app.use('/uploads', express.static(path.join(__dirname, '../frontend/uploads')));
 
-// --- 3. ROUTES (The New Logic) ---
+// Serve the 'backend/uploads' folder so users can view PDFs
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// --- 3. ROUTES ---
 const authRoutes = require('./routes/authRoutes');
+const noteRoutes = require('./routes/noteRoutes'); // NEW IMPORT
 
-// Mount the Auth Routes
-// Any URL starting with /api/auth goes to authRoutes
 app.use('/api/auth', authRoutes);  
+app.use('/api/notes', noteRoutes); // NEW ROUTE MOUNT
 
-// --- 4. CATCH-ALL (Fix for Express v5 Error) ---
-// We use /(.*)/ instead of '*' because Express 5 changed how wildcards work
+// --- 4. CATCH-ALL (SPA Support) ---
 app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
