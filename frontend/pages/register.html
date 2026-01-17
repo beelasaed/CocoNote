@@ -14,23 +14,46 @@
             <p style="color: var(--text-muted); margin-bottom: 2rem;">Join our study community</p>
         </div>
 
+        <p id="message" style="text-align: center; display: none; margin-bottom: 15px; font-weight: bold;"></p>
+
         <form id="registerForm">
             <div class="form-group">
                 <label>Full Name</label>
-                <input type="text" id="fullname" placeholder="John Doe" required>
+                <input type="text" id="name" placeholder="John Doe" required>
             </div>
+
+            <div class="form-group">
+                <label>Student ID</label>
+                <input type="text" id="student_id" placeholder="e.g. 220041128" required>
+            </div>
+
+            <div class="form-group">
+                <label>Department</label>
+                <select id="department" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.75rem; background: var(--coco-cream, #fcfcfc); box-sizing: border-box;">
+                    <option value="" disabled selected>Loading departments...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Batch</label>
+                <input type="number" id="batch" placeholder="e.g. 21" required>
+            </div>
+
             <div class="form-group">
                 <label>IUT Email</label>
-                <input type="email" id="email" placeholder="your.name@iut.edu" required>
+                <input type="email" id="email" placeholder="your.name@iut-dhaka.edu" required>
             </div>
+
             <div class="form-group">
                 <label>Password</label>
                 <input type="password" id="password" placeholder="••••••••" required>
             </div>
+
             <div class="form-group">
                 <label>Confirm Password</label>
                 <input type="password" id="confirmPassword" placeholder="••••••••" required>
             </div>
+
             <button type="submit" class="auth-btn" style="margin-top: 1rem;">Register</button>
         </form>
 
@@ -38,6 +61,7 @@
             Already have an account? <a href="login.html" class="link-gold">Login here</a>
         </p>
     </div>
+
     <script src="../screens/register.js"></script>
 </body>
 </html>
