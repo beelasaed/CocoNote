@@ -25,7 +25,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 3. Upload New Note (REQUIRED for NoteController)
+-- 1. UPLOAD NEW NOTE
+-- Encapsulates the INSERT logic for security.
 CREATE OR REPLACE FUNCTION upload_new_note(
     _title VARCHAR,
     _desc TEXT,
