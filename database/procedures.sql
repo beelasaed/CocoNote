@@ -53,3 +53,39 @@ BEGIN
     RETURNING note.note_id, note.title, note.created_at;
 END;
 $$;
+
+-- PROCEDURE: toggle_upvote
+-- Logic: If record exists -> DELETE (Undo Upvote). If not -> INSERT (Add Upvote).
+CREATE OR REPLACE FUNCTION toggle_upvote(p_user_id INT, p_note_id INT)
+RETURNS TEXT -- Returning a string so the frontend knows what happened
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the user is trying to upvote their own note
+    IF EXISTS (SELECT 1 FROM note WHERE note_id = p_note_id AND uploader_id = p_user_id) THEN
+        RAISE EXCEPTION 'You cannot upvote your own note.';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM upvote WHERE user_id = p_user_id AND note_id = p_note_id) THEN
+        DELETE FROM upvote WHERE user_id = p_user_id AND note_id = p_note_id;
+        RETURN 'REMOVED';
+    ELSE
+        INSERT INTO upvote (user_id, note_id) VALUES (p_user_id, p_note_id);
+        RETURN 'ADDED';
+    END IF;
+END;
+$$;
+-- PROCEDURE: Track Download
+-- Logic: Checks if user already downloaded this note. 
+-- If YES -> Do nothing (Ignore). 
+-- If NO -> Insert record (Trigger will then auto-increase count).
+CREATE OR REPLACE FUNCTION track_download(p_user_id INT, p_note_id INT)
+RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- REMOVED THE CHECK Logic
+    INSERT INTO download (user_id, note_id) VALUES (p_user_id, p_note_id);
+    RETURN 'TRACKED';
+END;
+$$;

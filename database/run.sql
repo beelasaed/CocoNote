@@ -1,28 +1,34 @@
--- database/run.sql
-
 \echo '----------------------------------'
-\echo '⏳ STARTING DATABASE RESET...'
+\echo ' STARTING FULL DATABASE RESET...'
 \echo '----------------------------------'
 
--- 1. Wipe everything clean
+-- 1. Reset Environment
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 
--- 2. Run schema to create tables
-\echo '... Creating Tables'
+-- 2. Base Tables
+\echo '... Creating Tables (Schema)'
 \i schema.sql
 
--- 3. (Optional) Run procedures/triggers if you have them
--- Uncomment these if you actually created these files
--- \echo '... Adding Procedures & Functions'
--- \i procedures.sql
--- \echo '... Adding Triggers'
--- \i triggers.sql
+-- 3. Logic & Functions 
+-- (Functions must exist before Triggers can use them)
+\echo '...  Adding Functions'
+\i functions.sql
 
--- 4. Fill with dummy data
+\echo '...  Adding Procedures'
+\i procedures.sql
+
+-- 4. Dependent Objects
+\echo '... Adding Triggers'
+\i triggers.sql
+
+\echo '...  Adding Views'
+\i views.sql
+
+-- 5. Data
 \echo '... Seeding Dummy Data'
 \i seed.sql
 
 \echo '----------------------------------'
-\echo '✅ DATABASE READY!'
+\echo ' DATABASE FULLY INITIALIZED!'
 \echo '----------------------------------'

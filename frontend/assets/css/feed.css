@@ -187,3 +187,15 @@
     font-size: 1.1rem;
     display: flex; align-items: center; justify-content: center;
 }
+/* Style for when the user has upvoted */
+.btn-upvote.active-upvote {
+    background-color:var(--coco-brown); /* Light Red background */
+    border-color: var(--coco-brown);  
+    color: white;      
+    transition: 0.2s ease;
+}
+
+.btn-upvote.active-upvote .icon {
+    color: white;
+    filter: none; /* Ensure the icon stays visible */
+}

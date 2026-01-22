@@ -43,3 +43,48 @@ BEGIN
     ORDER BY n.created_at DESC;
 END;
 $$;
+
+-- 2. GET PERSONALIZED FEED (With 'is_upvoted' flag)
+-- Usage: SELECT * FROM get_personalized_feed(5);
+CREATE OR REPLACE FUNCTION get_personalized_feed(current_user_id INT)
+RETURNS TABLE (
+    note_id INT,
+    title VARCHAR,
+    description TEXT,
+    file_path VARCHAR,
+    created_at TIMESTAMP,
+    batch VARCHAR,
+    upvotes INT,
+    downloads INT,
+    uploader VARCHAR,
+    course VARCHAR,
+    department VARCHAR,
+    category VARCHAR,
+    is_upvoted BOOLEAN  -- <--- The extra column for the button color
+) 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        v.note_id,
+        v.title, 
+        v.description, 
+        v.file_path, 
+        v.created_at, 
+        v.batch,
+        v.upvotes, 
+        v.downloads, 
+        v.uploader, 
+        v.course, 
+        v.department, 
+        v.category,
+        -- Check if THIS user has an entry in the upvote table
+        EXISTS(
+            SELECT 1 FROM upvote u 
+            WHERE u.note_id = v.note_id AND u.user_id = current_user_id
+        ) AS is_upvoted
+    FROM view_feed_details v
+    ORDER BY v.created_at DESC;
+END;
+$$;
