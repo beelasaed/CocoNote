@@ -62,26 +62,31 @@ function renderFeed(notes) {
     const popularItems = [...notes].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).slice(0, 3);
 
     if (popularContainer) {
-        popularContainer.innerHTML = popularItems.map(n => `
-            <div class="popular-card">
+        popularContainer.innerHTML = popularItems.map(n => {
+            const activeClass = n.is_upvoted ? 'active-upvote' : ''; 
+            
+            return `
+            <div class="popular-card" data-note-id="${n.note_id}">
                 <span class="category-tag">${n.category}</span>
                 <h4 style="margin: 12px 0; font-size: 1.25rem; font-weight: 700;">${n.title}</h4>
                 <p style="font-size: 0.9rem; color: #666; margin-bottom: 12px;">${n.course} • Batch ${n.batch}</p>
-                
                 <div class="stats-row-aesthetic">
+                    <button class="stat-pill btn-upvote ${activeClass}">
+                        <span class="icon">🥥</span> <span class="upvote-count">${n.upvotes || 0}</span>
+                    </button>
                     <div class="stat-pill">
-                        <span class="icon">🥥</span> ${n.upvotes || 0}
-                    </div>
-                    <div class="stat-pill">
-                        <span class="icon">⬇️</span> ${n.downloads || 0}
+                        <span class="icon">⬇️</span> <span class="download-count">${n.downloads || 0}</span>
                     </div>
                 </div>
 
-                <a href="${n.file_path}" target="_blank" class="btn-coco-earth" style="display:block; text-align:center; text-decoration:none; margin-top:15px;">
+                <a href="${n.file_path}" target="_blank" 
+                   class="btn-coco-earth btn-download" 
+                   data-note-id="${n.note_id}"
+                   style="display:block; text-align:center; text-decoration:none; margin-top:15px;">
                     Download
                 </a>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     // 2. ALL NOTES (List View)
@@ -89,8 +94,12 @@ function renderFeed(notes) {
         if (notes.length === 0) {
             allContainer.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">No notes found matching your criteria.</p>`;
         } else {
-            allContainer.innerHTML = notes.map(n => `
-                <div class="note-row-card">
+            allContainer.innerHTML = notes.map(n => {
+                // FIXED 1: Calculate active class here too
+                const activeClass = n.is_upvoted ? 'active-upvote' : '';
+
+                return `
+                <div class="note-row-card" data-note-id="${n.note_id}">
                     <div class="note-info">
                         <h4>${n.title}</h4>
                         <div class="note-meta">
@@ -101,21 +110,102 @@ function renderFeed(notes) {
                     
                     <div class="note-actions">
                         <div class="stats-group-aesthetic">
+                             <button class="stat-pill minimal btn-upvote ${activeClass}">
+                                <span class="icon">🥥</span> <span class="upvote-count">${n.upvotes || 0}</span>
+                            </button>
                             <div class="stat-pill minimal">
-                                <span class="icon">🥥</span> ${n.upvotes || 0}
-                            </div>
-                            <div class="stat-pill minimal">
-                                <span class="icon">⬇️</span> ${n.downloads || 0}
+                                <span class="icon">⬇️</span> <span class="download-count">${n.downloads || 0}</span>
                             </div>
                         </div>
 
                         <div class="btn-group">
-                            <a href="${n.file_path}" target="_blank" class="btn-coco-earth small" style="text-decoration:none;">Download</a>
+                            <a href="${n.file_path}" target="_blank" 
+                               class="btn-coco-earth small btn-download" 
+                               data-note-id="${n.note_id}"
+                               style="text-decoration:none;">Download</a>
                             <button class="btn-coco-save">🔖</button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     }
+
+    attachEventListeners();
+}
+ function attachEventListeners() {
+    // --- UPVOTE LISTENER ---
+    document.querySelectorAll('.btn-upvote').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const noteCard = e.target.closest('[data-note-id]');
+            const noteId = parseInt(noteCard.dataset.noteId, 10);
+            const token = localStorage.getItem('token');
+            const buttonElement = e.currentTarget; // FIXED: Select the button specifically
+
+            if (!noteId || isNaN(noteId)) { alert("Invalid note selected!"); return; }
+            if (!token) { window.location.href = 'login.html'; return; }
+
+            try {
+                const res = await fetch('/api/notes/upvote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ note_id: noteId })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    const countSpan = noteCard.querySelector('.upvote-count');
+                    const currentVal = parseInt(countSpan.innerText);
+
+                    if (data.message === 'ADDED') {
+                        countSpan.innerText = currentVal + 1;
+                        // FIXED 4: Visually turn ON the red heart
+                        buttonElement.classList.add('active-upvote');
+                    } else if (data.message === 'REMOVED') {
+                        countSpan.innerText = currentVal - 1;
+                        // FIXED 4: Visually turn OFF the red heart
+                        buttonElement.classList.remove('active-upvote');
+                    }
+                } else {
+                    alert(data.message || 'Error upvoting note');
+                }
+            } catch (err) {
+                console.error('Upvote Error:', err);
+            }
+        });
+    });
+
+    // --- DOWNLOAD TRACKING LISTENER ---
+    document.querySelectorAll('.btn-download').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // NOTE: We do NOT use preventDefault(). We let the download happen.
+            const noteId = btn.dataset.noteId;
+            const token = localStorage.getItem('token');
+
+            if (token && noteId) {
+                fetch('/api/notes/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ note_id: noteId })
+                }).then(res => res.json())
+                  .then(data => {
+                      if (data.message === 'TRACKED') {
+                          // Update count visually
+                          const card = btn.closest('[data-note-id]');
+                          const countSpan = card.querySelector('.download-count');
+                          if (countSpan) {
+                              countSpan.innerText = parseInt(countSpan.innerText) + 1;
+                          }
+                      }
+                  }).catch(console.error);
+            }
+        });
+    });
 }

@@ -1,25 +1,8 @@
-=/* FILE: triggers.sql
-   PURPOSE: Automates data integrity (timestamps) and Gamification (Badges, Counts).
+/* FILE: triggers.sql
+   PURPOSE: Automates data integrity and Gamification (Badges, Counts).
 */
 
--- 1. AUTOMATIC TIMESTAMP UPDATE (New Addition)
--- Purpose: Automatically updates 'updated_at' column when a note is edited.
-CREATE OR REPLACE FUNCTION refresh_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-   NEW.updated_at = NOW();
-   RETURN NEW;
-END;
-$$ language 'plpgsql';
-
-DROP TRIGGER IF EXISTS trigger_note_updated ON note;
-CREATE TRIGGER trigger_note_updated
-BEFORE UPDATE ON note
-FOR EACH ROW
-EXECUTE PROCEDURE refresh_updated_at_column();
-
-
--- 2. INCREMENT DOWNLOADS (Your Code)
+-- 1. INCREMENT DOWNLOADS
 -- Purpose: Updates 'note.downloads' when a record is added to 'download' table.
 CREATE OR REPLACE FUNCTION increment_note_downloads()
 RETURNS TRIGGER AS $$
@@ -29,7 +12,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- (Conditional drop to prevent errors if you re-run)
 DROP TRIGGER IF EXISTS trg_increment_download ON download;
 CREATE TRIGGER trg_increment_download
 AFTER INSERT ON download
@@ -37,24 +19,33 @@ FOR EACH ROW
 EXECUTE FUNCTION increment_note_downloads();
 
 
--- 3. INCREMENT UPVOTES (Your Code)
+-- 2. INCREMENT UPVOTES
 -- Purpose: Updates 'note.upvotes' when a record is added to 'upvote' table.
-CREATE OR REPLACE FUNCTION increment_note_upvotes()
+-- TRIGGER FUNCTION: adjust upvotes
+CREATE OR REPLACE FUNCTION adjust_note_upvotes()
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE note SET upvotes = upvotes + 1 WHERE note_id = NEW.note_id;
-    RETURN NEW;
+    IF TG_OP = 'INSERT' THEN
+        UPDATE note SET upvotes = upvotes + 1 WHERE note_id = NEW.note_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE note SET upvotes = upvotes - 1 WHERE note_id = OLD.note_id;
+    END IF;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop old trigger
 DROP TRIGGER IF EXISTS trg_increment_upvote ON upvote;
+
+-- Create new trigger for both INSERT and DELETE
 CREATE TRIGGER trg_increment_upvote
-AFTER INSERT ON upvote
+AFTER INSERT OR DELETE ON upvote
 FOR EACH ROW
-EXECUTE FUNCTION increment_note_upvotes();
+EXECUTE FUNCTION adjust_note_upvotes();
 
 
--- 4. ASSIGN BADGES (Your Code)
+
+-- 3. ASSIGN BADGES
 -- Purpose: Awards badges automatically when upload milestones are met.
 CREATE OR REPLACE FUNCTION assign_upload_badges()
 RETURNS TRIGGER AS $$

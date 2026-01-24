@@ -6,7 +6,6 @@ SELECT
     n.description, 
     n.file_path, 
     n.created_at, 
-    n.updated_at,
     n.batch,
     n.upvotes, 
     n.downloads, 

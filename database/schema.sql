@@ -60,7 +60,8 @@ CREATE TABLE note (
     uploads INT DEFAULT 0,
     downloads INT DEFAULT 0,
     upvotes INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- 4. Action Tables --
