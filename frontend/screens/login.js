@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            // Step 0: Client-side Domain Check
+            if (!email.endsWith('@iut-dhaka.edu')) {
+                errorMsg.textContent = '❌ Only @iut-dhaka.edu emails are allowed.';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
             // Reset UI
             errorMsg.style.display = 'none';
             submitBtn.textContent = 'Logging in...';
@@ -34,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('user', JSON.stringify(data.user));
 
                     // 3. Redirect to Dashboard
-                    window.location.href = 'dashboard.html'; 
+                    window.location.href = 'dashboard.html';
                 } else {
                     // 4. ERROR: Show message (e.g., "Invalid Password")
                     errorMsg.textContent = `❌ ${data.message}`;
