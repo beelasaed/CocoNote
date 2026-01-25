@@ -49,6 +49,8 @@ function removeToast(toast) {
 document.addEventListener('DOMContentLoaded', () => {
     setupNotificationDropdown();
     updateBadge(); // Check on load
+    setupThemeToggle();
+    setupLogout();
 });
 
 function saveToHistory(message) {
@@ -137,4 +139,34 @@ function updateBadge() {
     if (badge) {
         badge.style.display = hasUnread ? 'block' : 'none';
     }
+}
+
+// --- 3. GLOBAL UI HELPERS ---
+
+function setupThemeToggle() {
+    const themeBtn = document.getElementById('theme-toggle');
+    if (!themeBtn) return;
+
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+
+    themeBtn.addEventListener('click', () => {
+        let theme = document.documentElement.getAttribute('data-theme');
+        let newTheme = theme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    });
+}
+
+function setupLogout() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (!logoutBtn) return;
+
+    logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showConfirm("Are you sure you want to log out from CocoNote?", () => {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        });
+    });
 }

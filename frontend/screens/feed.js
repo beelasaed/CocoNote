@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const dept = params.get('dept') || 'All';
     const deptTitle = document.getElementById('dept-title-heading');
-    
-    if(deptTitle) deptTitle.innerText = `${dept} Department Notes`;
+
+    if (deptTitle) deptTitle.innerText = `${dept} Department Notes`;
 
     fetchNotes();
 
@@ -14,26 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) searchInput.addEventListener('input', applyFilters);
     if (batchFilter) batchFilter.addEventListener('change', applyFilters);
     if (catFilter) catFilter.addEventListener('change', applyFilters);
-
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            // Checks if our new notification system is loaded
-            if (typeof showConfirm === 'function') {
-                showConfirm("Are you sure you want to log out?", () => {
-                    localStorage.removeItem('token');
-                    window.location.href = 'login.html';
-                });
-            } else {
-                // Fallback just in case
-                if(confirm("Log out?")) {
-                    localStorage.removeItem('token');
-                    window.location.href = 'login.html';
-                }
-            }
-        });
-    }
 
 });
 
@@ -64,10 +44,10 @@ function applyFilters() {
     const catVal = document.getElementById('cat-filter').value;
 
     const filtered = allNotes.filter(note => {
-        const matchesSearch = note.title.toLowerCase().includes(searchTerm) || 
-                              note.course.toLowerCase().includes(searchTerm);
+        const matchesSearch = note.title.toLowerCase().includes(searchTerm) ||
+            note.course.toLowerCase().includes(searchTerm);
         const matchesBatch = batchVal ? note.batch == batchVal : true;
-        const matchesCat = catVal ? note.category === catVal : true; 
+        const matchesCat = catVal ? note.category === catVal : true;
 
         return matchesSearch && matchesBatch && matchesCat;
     });
@@ -84,8 +64,8 @@ function renderFeed(notes) {
 
     if (popularContainer) {
         popularContainer.innerHTML = popularItems.map(n => {
-            const activeClass = n.is_upvoted ? 'active-upvote' : ''; 
-            
+            const activeClass = n.is_upvoted ? 'active-upvote' : '';
+
             return `
             <div class="popular-card" data-note-id="${n.note_id}">
                 <span class="category-tag">${n.category}</span>
@@ -154,7 +134,7 @@ function renderFeed(notes) {
 
     attachEventListeners();
 }
- function attachEventListeners() {
+function attachEventListeners() {
     // --- UPVOTE LISTENER ---
     document.querySelectorAll('.btn-upvote').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -186,19 +166,19 @@ function renderFeed(notes) {
                         countSpan.innerText = currentVal + 1;
                         // FIXED 4: Visually turn ON the red heart
                         buttonElement.classList.add('active-upvote');
-                        if(typeof showToast === 'function') showToast("Upvoted 🥥");
+                        if (typeof showToast === 'function') showToast("Upvoted 🥥");
                     } else if (data.message === 'REMOVED') {
                         countSpan.innerText = currentVal - 1;
                         // FIXED 4: Visually turn OFF the red heart
                         buttonElement.classList.remove('active-upvote');
-                        if(typeof showToast === 'function') showToast("Upvote removed");
+                        if (typeof showToast === 'function') showToast("Upvote removed");
                     }
                 } else {
-                    if(typeof showToast === 'function') {
+                    if (typeof showToast === 'function') {
                         // Shows error message (like "Cannot upvote own note") for 4 seconds
                         showToast(data.message || 'Error upvoting note', null, null, 4000);
                     } else {
-                    alert(data.message || 'Error upvoting note');
+                        alert(data.message || 'Error upvoting note');
                     }
                 }
             } catch (err) {
@@ -213,9 +193,9 @@ function renderFeed(notes) {
             // NOTE: We do NOT use preventDefault(). We let the download happen.
             e.preventDefault();
             if (typeof showToast === 'function') {
-                 // We grab the file link so the toast can let them open it again if they want
-                 const fileLink = btn.getAttribute('href'); 
-                 showToast("Download ready!", fileLink, "Open File", 6000);
+                // We grab the file link so the toast can let them open it again if they want
+                const fileLink = btn.getAttribute('href');
+                showToast("Download ready!", fileLink, "Open File", 6000);
             }
 
             const noteId = btn.dataset.noteId;
@@ -230,16 +210,16 @@ function renderFeed(notes) {
                     },
                     body: JSON.stringify({ note_id: noteId })
                 }).then(res => res.json())
-                  .then(data => {
-                      if (data.message === 'TRACKED') {
-                          // Update count visually
-                          const card = btn.closest('[data-note-id]');
-                          const countSpan = card.querySelector('.download-count');
-                          if (countSpan) {
-                              countSpan.innerText = parseInt(countSpan.innerText) + 1;
-                          }
-                      }
-                  }).catch(console.error);
+                    .then(data => {
+                        if (data.message === 'TRACKED') {
+                            // Update count visually
+                            const card = btn.closest('[data-note-id]');
+                            const countSpan = card.querySelector('.download-count');
+                            if (countSpan) {
+                                countSpan.innerText = parseInt(countSpan.innerText) + 1;
+                            }
+                        }
+                    }).catch(console.error);
             }
         });
     });
