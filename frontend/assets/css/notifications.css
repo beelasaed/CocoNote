@@ -1,0 +1,182 @@
+.toast-notification {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    
+    background-color: var(--coco-brown); 
+    color: var(--coco-cream, #fff);
+    border: 1px solid var(--coco-gold);
+    
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(60, 40, 30, 0.4); 
+    
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 10000;
+    
+    font-family: 'Inter', sans-serif; 
+    animation: slideIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+.toast-btn {
+    background-color: var(--coco-gold);
+    color: var(--white, #fff);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.toast-btn:hover {
+    background-color: var(--coco-gold-hover);
+    transform: scale(1.02);
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.toast-notification.fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.5s, transform 0.5s;
+}
+
+.toast-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: 10px;
+}
+
+.toast-btn-confirm {
+    background-color: var(--coco-gold);
+    color: var(--white, #fff);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.toast-btn-cancel {
+    background-color: transparent;
+    border: 1px solid var(--coco-gold);
+    color: var(--coco-gold);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.toast-btn-confirm:hover { background-color: var(--coco-gold-hover); }
+.toast-btn-cancel:hover { background-color: rgba(212, 163, 115, 0.1); }
+
+
+.notification-dropdown {
+    display: none; 
+    position: absolute;
+    top: 50px; 
+    right: 0;
+    width: 320px;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    z-index: 9999;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.notification-dropdown.active {
+    display: block;
+}
+
+.notif-header {
+    background-color: var(--coco-brown);
+    color: var(--coco-cream, #fff);
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--coco-gold);
+}
+
+/* Clear Button */
+.notif-header button {
+    background: none;
+    border: none;
+    color: var(--coco-gold);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.notif-header button:hover { color: #fff; text-decoration: underline; }
+
+/* The Scrollable List */
+.notif-list-content {
+    max-height: 350px;
+    overflow-y: auto;
+    background-color: #fff;
+}
+
+/* Individual Item */
+.notif-item {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    transition: background-color 0.1s;
+}
+
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background-color: var(--coco-cream); }
+
+/* Item Text Styles */
+.notif-item span:first-child {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.notif-time {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* Empty State Message */
+.empty-msg {
+    padding: 30px;
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+/* Red Badge (The Dot) */
+.dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 10px;
+    width: 10px;
+    background-color: #ff4444;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

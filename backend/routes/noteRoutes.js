@@ -14,7 +14,6 @@ const storage = multer.diskStorage({
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
-
 const upload = multer({ 
     storage: storage,
     fileFilter: (req, file, cb) => {
@@ -28,5 +27,7 @@ router.post('/upload', protect, upload.single('pdfFile'), noteController.uploadN
 router.get('/feed', protect, noteController.getAllNotes);
 router.post('/upvote', protect, noteController.toggleUpvote);
 router.post('/download', protect, noteController.trackDownload);
+router.post('/upvote/json', protect, noteController.toggleUpvoteAJAX);
+router.post('/download/json', protect, noteController.trackDownloadAJAX);
 
 module.exports = router;

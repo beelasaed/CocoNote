@@ -84,15 +84,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await response.json();
 
             if (response.ok) {
-                alert("🥥 Success! Your note has been uploaded.");
-                window.location.href = 'feed.html';
+                if (typeof showToast === 'function') {
+                    showToast("Note uploaded successfully! 🥥");
+                } else {
+                    alert("🥥 Success! Your note has been uploaded.");
+                }
+
+                // Wait 1.5 seconds so user sees the popup before leaving
+                setTimeout(() => {
+                    window.location.href = 'feed.html';
+                }, 1500);
+
             } else {
-                alert("Upload failed: " + (result.message || "Unknown error"));
+                if (typeof showToast === 'function') {
+                    showToast("Upload failed: " + (result.message || "Unknown error"));
+                } else {
+                    alert("Upload failed: " + (result.message || "Unknown error"));
+                }
                 console.log(result);
             }
         } catch (err) {
             console.error("Submission Error:", err);
+            if (typeof showToast === 'function') {
+                showToast("Could not connect to the server.");
+            } else {
             alert("Could not connect to the server.");
+            }
         }
     });
 });

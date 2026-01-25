@@ -14,6 +14,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) searchInput.addEventListener('input', applyFilters);
     if (batchFilter) batchFilter.addEventListener('change', applyFilters);
     if (catFilter) catFilter.addEventListener('change', applyFilters);
+
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Checks if our new notification system is loaded
+            if (typeof showConfirm === 'function') {
+                showConfirm("Are you sure you want to log out?", () => {
+                    localStorage.removeItem('token');
+                    window.location.href = 'login.html';
+                });
+            } else {
+                // Fallback just in case
+                if(confirm("Log out?")) {
+                    localStorage.removeItem('token');
+                    window.location.href = 'login.html';
+                }
+            }
+        });
+    }
+
 });
 
 let allNotes = [];
@@ -165,13 +186,20 @@ function renderFeed(notes) {
                         countSpan.innerText = currentVal + 1;
                         // FIXED 4: Visually turn ON the red heart
                         buttonElement.classList.add('active-upvote');
+                        if(typeof showToast === 'function') showToast("Upvoted 🥥");
                     } else if (data.message === 'REMOVED') {
                         countSpan.innerText = currentVal - 1;
                         // FIXED 4: Visually turn OFF the red heart
                         buttonElement.classList.remove('active-upvote');
+                        if(typeof showToast === 'function') showToast("Upvote removed");
                     }
                 } else {
+                    if(typeof showToast === 'function') {
+                        // Shows error message (like "Cannot upvote own note") for 4 seconds
+                        showToast(data.message || 'Error upvoting note', null, null, 4000);
+                    } else {
                     alert(data.message || 'Error upvoting note');
+                    }
                 }
             } catch (err) {
                 console.error('Upvote Error:', err);
@@ -183,6 +211,13 @@ function renderFeed(notes) {
     document.querySelectorAll('.btn-download').forEach(btn => {
         btn.addEventListener('click', (e) => {
             // NOTE: We do NOT use preventDefault(). We let the download happen.
+            e.preventDefault();
+            if (typeof showToast === 'function') {
+                 // We grab the file link so the toast can let them open it again if they want
+                 const fileLink = btn.getAttribute('href'); 
+                 showToast("Download ready!", fileLink, "Open File", 6000);
+            }
+
             const noteId = btn.dataset.noteId;
             const token = localStorage.getItem('token');
 
