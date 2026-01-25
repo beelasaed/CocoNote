@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CocoNote - Leaderboard</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/leaderboard.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
 </head>
+
 <body class="leaderboard-body">
 
     <nav class="upper-nav">
@@ -14,7 +17,7 @@
             <div class="nav-left">
                 <a href="dashboard.html" class="nav-logo">🥥 CocoNote</a>
             </div>
-            
+
             <div class="nav-center">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="feed.html" class="nav-link">Feed</a>
@@ -24,7 +27,20 @@
 
             <div class="nav-right">
                 <button id="theme-toggle" class="icon-btn">🌓</button>
-                <button class="icon-btn">🔔<span class="dot"></span></button>
+                <div class="notification-wrapper" style="position: relative;">
+                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot"
+                            style="display: none;"></span></button>
+                    <div id="notif-dropdown" class="notification-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <button id="clear-notifs"
+                                style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
+                        </div>
+                        <div id="notif-list" class="notif-list-content">
+                            <p class="empty-msg">No new notifications</p>
+                        </div>
+                    </div>
+                </div>
                 <a href="profile.html" class="profile-circle">👤</a>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
@@ -71,10 +87,12 @@
                 <span>Points</span>
             </div>
             <div id="ranking-list-container">
-                </div>
+            </div>
         </section>
     </main>
 
+    <script src="../screens/notifications.js"></script>
     <script src="../screens/leaderboard.js"></script>
 </body>
+
 </html>

@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CocoNote - My Profile</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/profile.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
 </head>
+
 <body class="profile-body">
 
     <nav class="upper-nav">
@@ -14,7 +17,7 @@
             <div class="nav-left">
                 <a href="dashboard.html" class="nav-logo">🥥 CocoNote</a>
             </div>
-            
+
             <div class="nav-center">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="feed.html" class="nav-link">Feed</a>
@@ -24,7 +27,20 @@
 
             <div class="nav-right">
                 <button id="theme-toggle" class="icon-btn">🌓</button>
-                <button class="icon-btn">🔔<span class="dot"></span></button>
+                <div class="notification-wrapper" style="position: relative;">
+                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot"
+                            style="display: none;"></span></button>
+                    <div id="notif-dropdown" class="notification-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <button id="clear-notifs"
+                                style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
+                        </div>
+                        <div id="notif-list" class="notif-list-content">
+                            <p class="empty-msg">No new notifications</p>
+                        </div>
+                    </div>
+                </div>
                 <a href="profile.html" class="profile-circle active-profile">👤</a>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
@@ -41,7 +57,7 @@
                     <button class="btn-edit-profile">Edit Profile</button>
                 </div>
             </div>
-            
+
             <div class="user-stats-bar">
                 <div class="stat-box">
                     <span class="stat-num">3,820</span>
@@ -87,10 +103,12 @@
             </div>
 
             <div id="tab-content" class="tab-content">
-                </div>
+            </div>
         </section>
     </main>
 
+    <script src="../screens/notifications.js"></script>
     <script src="../screens/profile.js"></script>
 </body>
+
 </html>

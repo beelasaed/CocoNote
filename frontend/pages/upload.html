@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CocoNote - Upload Note</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/upload.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
 </head>
+
 <body class="upload-body">
 
     <nav class="upper-nav">
@@ -14,7 +17,7 @@
             <div class="nav-left">
                 <span class="nav-logo">🥥 CocoNote</span>
             </div>
-            
+
             <div class="nav-center">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="feed.html" class="nav-link">Feed</a>
@@ -23,8 +26,21 @@
             </div>
 
             <div class="nav-right">
-                <button id="theme-toggle" class="icon-btn">🌙</button>
-                <button class="icon-btn">🔔<span class="dot"></span></button>
+                <button id="theme-toggle" class="icon-btn">🌓</button>
+                <div class="notification-wrapper" style="position: relative;">
+                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot"
+                            style="display: none;"></span></button>
+                    <div id="notif-dropdown" class="notification-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <button id="clear-notifs"
+                                style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
+                        </div>
+                        <div id="notif-list" class="notif-list-content">
+                            <p class="empty-msg">No new notifications</p>
+                        </div>
+                    </div>
+                </div>
                 <a href="profile.html" class="profile-circle">👤</a>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
@@ -75,7 +91,9 @@
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label>Description (Optional)</label>
-                        <textarea id="description" rows="3" style="width: 100%; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: var(--bg-card); color: var(--text-main); font-family: inherit;" placeholder="Briefly describe what's inside..."></textarea>
+                        <textarea id="description" rows="3"
+                            style="width: 100%; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: var(--bg-card); color: var(--text-main); font-family: inherit;"
+                            placeholder="Briefly describe what's inside..."></textarea>
                     </div>
                 </div>
 
@@ -83,7 +101,8 @@
             </form>
         </div>
     </main>
-
+    <script src="../screens/notifications.js"></script>
     <script src="../screens/upload.js"></script>
 </body>
+
 </html>
