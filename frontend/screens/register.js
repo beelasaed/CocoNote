@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const res = await fetch(`${API_URL}/departments`);
             const departments = await res.json();
-            
+
             // Clear "Loading..." text
             deptSelect.innerHTML = '<option value="" disabled selected>Select Department</option>';
-            
+
             // Add options from database
             departments.forEach(dept => {
                 const option = document.createElement('option');
@@ -32,17 +32,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Collect all data
+            const emailInput = document.getElementById('email');
+            const emailError = document.getElementById('email-error');
+            const email = emailInput.value;
+
+            // Reset Field Errors
+            emailInput.classList.remove('error-border');
+            emailError.style.display = 'none';
+
             const formData = {
                 name: document.getElementById('name').value,
                 student_id: document.getElementById('student_id').value,
                 department_id: document.getElementById('department').value,
                 batch: document.getElementById('batch').value,
-                email: document.getElementById('email').value,
+                email: email,
                 password: document.getElementById('password').value,
                 confirmPassword: document.getElementById('confirmPassword').value
             };
+
+            // Step 0: Client-side Domain Check
+            if (!email.endsWith('@iut-dhaka.edu')) {
+                emailInput.classList.add('error-border');
+                emailError.style.display = 'block';
+                return;
+            }
 
             // Show Loading State
             messageBox.style.display = 'block';
@@ -63,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Success!
                     messageBox.style.color = 'green';
                     messageBox.textContent = '✅ Success! Redirecting to login...';
-                    
+
                     // Wait 2 seconds then go to Login page
                     setTimeout(() => {
                         window.location.href = 'login.html';

@@ -7,6 +7,11 @@ exports.registerUser = async (req, res) => {
     const { name, student_id, email, department_id, batch, password } = req.body;
 
     try {
+        // Step 0: Check Email Domain
+        if (!email.endsWith('@iut-dhaka.edu')) {
+            return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
+        }
+
         // Step A: Check if Student ID is allowed (in valid_student_ids table)
         const idCheck = await pool.query('SELECT * FROM valid_student_ids WHERE student_id = $1', [student_id]);
         if (idCheck.rows.length === 0) {
@@ -47,9 +52,14 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        // Step 0: Check Email Domain (Strict measure)
+        if (!email.endsWith('@iut-dhaka.edu')) {
+            return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
+        }
+
         // Step A: Find user by Email
         const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-        
+
         if (userResult.rows.length === 0) {
             return res.status(400).json({ message: "User not found" });
         }
@@ -66,10 +76,10 @@ exports.loginUser = async (req, res) => {
         const token = jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1h' });
 
         // We can just assume they are a student in the response
-        res.json({ 
-            message: "Login Successful", 
-            token, 
-            user: { ...user, role: 'student' } 
+        res.json({
+            message: "Login Successful",
+            token,
+            user: { ...user, role: 'student' }
         });
 
     } catch (err) {

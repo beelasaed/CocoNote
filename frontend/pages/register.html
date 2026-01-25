@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>CocoNote - Create Account</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/register.css">
 </head>
+
 <body class="register-body">
     <div class="register-card animate-up">
         <div style="text-align: center;">
@@ -29,7 +31,8 @@
 
             <div class="form-group">
                 <label>Department</label>
-                <select id="department" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.75rem; background: var(--coco-cream, #fcfcfc); box-sizing: border-box;">
+                <select id="department" required
+                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.75rem; background: var(--coco-cream, #fcfcfc); box-sizing: border-box;">
                     <option value="" disabled selected>Loading departments...</option>
                 </select>
             </div>
@@ -42,6 +45,7 @@
             <div class="form-group">
                 <label>IUT Email</label>
                 <input type="email" id="email" placeholder="your.name@iut-dhaka.edu" required>
+                <span id="email-error" class="field-error">Only @iut-dhaka.edu emails are allowed.</span>
             </div>
 
             <div class="form-group">
@@ -64,4 +68,5 @@
 
     <script src="../screens/register.js"></script>
 </body>
+
 </html>
