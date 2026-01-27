@@ -41,11 +41,33 @@ async function fetchNotes() {
 
         if (response.ok) {
             allNotes = data;
-            renderFeed(allNotes);
+            initializeFiltersFromURL();
         } else {
             console.error("Failed to fetch notes:", data.message);
         }
     } catch (err) { console.error("Error:", err); }
+}
+
+function initializeFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const search = params.get('search') || '';
+    const batch = params.get('batch') || '';
+    const category = params.get('category') || '';
+
+    const searchInput = document.getElementById('note-search');
+    const batchFilter = document.getElementById('batch-filter');
+    const catFilter = document.getElementById('cat-filter');
+
+    if (searchInput) searchInput.value = search;
+    if (batchFilter && batch) batchFilter.value = batch;
+    if (catFilter && category) catFilter.value = category;
+
+    // If any filter is active, apply them; otherwise show all notes
+    if (search || batch || category) {
+        applyFilters();
+    } else {
+        renderFeed(allNotes);
+    }
 }
 
 function applyFilters() {
