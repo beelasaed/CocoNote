@@ -23,8 +23,18 @@ async function fetchNotes() {
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'login.html'; return; }
 
+    // 1. Get the department from the URL
+    const params = new URLSearchParams(window.location.search);
+    const dept = params.get('dept'); 
+
+    // 2. Build the URL. If dept exists, add it to the API call.
+    let url = '/api/notes/feed';
+    if (dept && dept !== 'All') {
+        url += `?dept=${encodeURIComponent(dept)}`;
+    }
+
     try {
-        const response = await fetch('/api/notes/feed', {
+        const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();

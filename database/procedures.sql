@@ -76,15 +76,11 @@ BEGIN
 END;
 $$;
 -- PROCEDURE: Track Download
--- Logic: Checks if user already downloaded this note. 
--- If YES -> Do nothing (Ignore). 
--- If NO -> Insert record (Trigger will then auto-increase count).
 CREATE OR REPLACE FUNCTION track_download(p_user_id INT, p_note_id INT)
 RETURNS TEXT
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- REMOVED THE CHECK Logic
     INSERT INTO download (user_id, note_id) VALUES (p_user_id, p_note_id);
     RETURN 'TRACKED';
 END;
