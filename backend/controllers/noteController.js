@@ -67,7 +67,44 @@ exports.getAllNotes = async (req, res) => {
     }
 };
 
-// --- 3b. Get Note By ID ---
+// --- 3b. Get User's Own Notes ---
+exports.getUserNotes = async (req, res) => {
+    try {
+        const user_id = req.user.user_id;
+
+        // Fetch the user's uploaded notes with all details
+        const result = await pool.query(`
+            SELECT 
+                n.note_id,
+                n.title,
+                n.description,
+                n.batch,
+                n.upvotes,
+                n.downloads,
+                n.created_at,
+                c.name AS category,
+                co.code AS course_code,
+                co.name AS course,
+                d.name AS department,
+                u.name AS uploader,
+                n.uploader_id
+            FROM note n
+            LEFT JOIN category c ON n.category_id = c.category_id
+            LEFT JOIN course co ON n.course_id = co.course_id
+            LEFT JOIN departments d ON n.department_id = d.department_id
+            LEFT JOIN users u ON n.uploader_id = u.user_id
+            WHERE n.uploader_id = $1
+            ORDER BY n.created_at DESC
+        `, [user_id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching user notes:", err);
+        res.status(500).json({ message: "Server Error fetching user notes" });
+    }
+};
+
+// --- 3c. Get Note By ID ---
 exports.getNoteById = async (req, res) => {
     try {
         const { note_id } = req.params;
@@ -91,6 +128,7 @@ exports.getNoteById = async (req, res) => {
                 co.name AS course_name,
                 d.name AS department,
                 u.name AS uploader,
+                u.user_id AS uploader_id,
                 u.student_id,
                 CASE WHEN EXISTS(SELECT 1 FROM upvote WHERE upvote.note_id = n.note_id AND upvote.user_id = $2) THEN true ELSE false END AS is_upvoted
             FROM note n
@@ -179,18 +217,34 @@ exports.toggleUpvoteAJAX = async (req, res) => {
             return res.status(400).json({ success: false, message: "Note does not exist" });
         }
 
+        const note_uploader_id = noteCheck.rows[0].uploader_id;
+
         // Prevent upvoting own note
-        if (noteCheck.rows[0].uploader_id === user_id) {
+        if (note_uploader_id === user_id) {
             return res.status(400).json({ success: false, message: "You cannot upvote your own note." });
         }
 
         // Toggle the vote using the stored procedure
         const result = await pool.query(`SELECT toggle_upvote($1, $2) AS action`, [user_id, note_id]);
+        const action = result.rows[0].action;
+
+        // Create notification if upvote was added
+        if (action === 'ADDED') {
+            try {
+                await pool.query(`
+                    INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+                    VALUES ($1, $2, $3, 'upvote')
+                `, [note_uploader_id, user_id, note_id]);
+            } catch (notifErr) {
+                console.error("Error creating notification:", notifErr);
+                // Don't block the upvote if notification fails
+            }
+        }
         
         // Return clear JSON for your frontend
         return res.json({ 
             success: true, 
-            message: result.rows[0].action === 'ADDED' ? "Upvoted successfully!" : "Upvote removed." 
+            message: action === 'ADDED' ? "Upvoted successfully!" : "Upvote removed." 
         });
 
     } catch (err) {
@@ -207,16 +261,84 @@ exports.trackDownloadAJAX = async (req, res) => {
 
         if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
 
+        // Get note uploader before tracking
+        const noteCheck = await pool.query('SELECT uploader_id FROM note WHERE note_id = $1', [note_id]);
+        if (noteCheck.rowCount === 0) {
+            return res.status(400).json({ success: false, message: "Note does not exist" });
+        }
+
+        const note_uploader_id = noteCheck.rows[0].uploader_id;
+
         // Track the download
         const result = await pool.query(
             `SELECT track_download($1, $2) AS status`, 
             [user_id, note_id]
         );
 
+        // Create notification if downloader is not the uploader
+        if (user_id !== note_uploader_id) {
+            try {
+                await pool.query(`
+                    INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+                    VALUES ($1, $2, $3, 'download')
+                `, [note_uploader_id, user_id, note_id]);
+            } catch (notifErr) {
+                console.error("Error creating notification:", notifErr);
+                // Don't block the download if notification fails
+            }
+        }
+
         return res.json({ success: true, message: "Download started!" });
 
     } catch (err) {
         console.error("Download Track AJAX Error:", err);
         return res.status(500).json({ success: false, message: "Tracking failed" });
+    }
+};
+
+// --- 6. GET UPVOTERS OF A NOTE ---
+exports.getNoteUpvoters = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        const user_id = req.user.user_id;
+
+        if (!note_id) {
+            return res.status(400).json({ message: "note_id is required" });
+        }
+
+        // Verify that the requesting user owns this note
+        const noteCheck = await pool.query('SELECT uploader_id FROM note WHERE note_id = $1', [note_id]);
+        if (noteCheck.rowCount === 0) {
+            return res.status(404).json({ message: "Note not found" });
+        }
+
+        if (noteCheck.rows[0].uploader_id !== user_id) {
+            return res.status(403).json({ message: "You can only view upvoters for your own notes" });
+        }
+
+        // Get all users who upvoted this note
+        const result = await pool.query(`
+            SELECT 
+                u.user_id,
+                u.name,
+                u.batch,
+                d.name AS department,
+                COUNT(DISTINCT n.note_id) AS notes_uploaded,
+                COALESCE(SUM(n.downloads), 0) AS total_downloads,
+                COALESCE(SUM(n.upvotes), 0) AS total_upvotes
+            FROM upvote uv
+            LEFT JOIN users u ON uv.user_id = u.user_id
+            LEFT JOIN departments d ON u.department_id = d.department_id
+            LEFT JOIN note n ON n.uploader_id = u.user_id
+            WHERE uv.note_id = $1
+            GROUP BY u.user_id, u.name, u.batch, d.name
+            ORDER BY u.name ASC
+        `, [note_id]);
+
+        res.json(result.rows);
+
+    } catch (err) {
+        console.error("Error fetching upvoters:", err);
+        res.status(500).json({ message: "Server Error fetching upvoters" });
     }
 };

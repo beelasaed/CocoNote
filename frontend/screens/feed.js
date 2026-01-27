@@ -156,7 +156,9 @@ function renderFeed(notes) {
                                class="btn-coco-earth small btn-download" 
                                data-note-id="${n.note_id}"
                                style="text-decoration:none;">Download</a>
-                            <button class="btn-coco-save">🔖</button>
+                            <button class="btn-coco-save" title="Save note">
+                                <i class="ri-bookmark-line"></i>
+                            </button>
                         </div>
                     </div>
                 </div>

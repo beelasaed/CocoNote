@@ -46,6 +46,30 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.podium-item:hover {
+    transform: translateY(-8px);
+}
+
+.podium-item h3 {
+    transition: color 0.2s ease;
+}
+
+.podium-item:hover h3 {
+    color: var(--coco-gold);
+}
+
+.podium-item .points-pill {
+    transition: all 0.2s ease;
+}
+
+.podium-item:hover .points-pill {
+    background: var(--coco-cream);
+    box-shadow: 0 6px 16px rgba(215, 174, 108, 0.2);
 }
 .avatar-box { font-size: 3rem; margin-bottom: 0.5rem; }
 .dept-tag { font-size: 0.75rem; font-weight: 700; color: var(--coco-gold); text-transform: uppercase; }
@@ -79,7 +103,7 @@
 }
 .ranking-list-header {
     display: grid;
-    grid-template-columns: 80px 1fr 1fr 120px;
+    grid-template-columns: 80px 1fr 1fr 100px 100px;
     padding: 1rem;
     border-bottom: 1px solid #eee;
     font-weight: 700;
@@ -89,7 +113,7 @@
 }
 .rank-row {
     display: grid;
-    grid-template-columns: 80px 1fr 1fr 120px;
+    grid-template-columns: 80px 1fr 1fr 100px 100px;
     padding: 1.2rem 1rem;
     border-bottom: 1px solid #f9f9f9;
     align-items: center;
@@ -97,4 +121,5 @@
 }
 .rank-row:hover { background: var(--coco-cream); border-radius: 1rem; }
 .rank-number { font-weight: 800; color: var(--coco-gold); }
-.rank-points { font-weight: 700; color: var(--coco-earth); }
+.rank-upvotes { font-weight: 700; color: #27ae60; text-align: center; }
+.rank-downloads { font-weight: 700; color: #3498db; text-align: center; }

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.min.css">
     <style>
         * {
@@ -16,6 +17,109 @@
         body {
             background: linear-gradient(135deg, #fafaf8 0%, #f5f1eb 100%);
             min-height: 100vh;
+            color: #333;
+        }
+
+        /* Dark Mode Support */
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .pdf-section h1 {
+            color: #f0f0f0;
+        }
+
+        [data-theme="dark"] .pdf-section > p {
+            color: #b0b0b0;
+        }
+
+        [data-theme="dark"] .pdf-preview {
+            background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+            border-color: rgba(215, 174, 108, 0.2);
+        }
+
+        [data-theme="dark"] .note-details-card {
+            background: #2a2a2a;
+            border-color: rgba(215, 174, 108, 0.2);
+        }
+
+        [data-theme="dark"] .note-details-card h4 {
+            color: #f0f0f0;
+            border-bottom-color: rgba(215, 174, 108, 0.25);
+        }
+
+        [data-theme="dark"] .detail-item strong {
+            color: var(--coco-gold);
+        }
+
+        [data-theme="dark"] .detail-item-value {
+            color: #e0e0e0;
+        }
+
+        [data-theme="dark"] .category-badge {
+            background: linear-gradient(135deg, rgba(215, 174, 108, 0.2) 0%, rgba(215, 174, 108, 0.1) 100%);
+            color: var(--coco-gold);
+        }
+
+        [data-theme="dark"] .btn-upvote-details {
+            background: #333333;
+            color: var(--coco-gold);
+            border-color: rgba(215, 174, 108, 0.4);
+        }
+
+        [data-theme="dark"] .btn-upvote-details:hover {
+            background: #404040;
+            border-color: rgba(215, 174, 108, 0.6);
+        }
+
+        [data-theme="dark"] .stat-pill {
+            background: #333333;
+            color: #b0b0b0;
+            border-color: rgba(215, 174, 108, 0.3);
+        }
+
+        [data-theme="dark"] .stat-pill:hover {
+            background: #3a3a3a;
+            border-color: rgba(215, 174, 108, 0.5);
+        }
+
+        [data-theme="dark"] .back-link {
+            color: var(--coco-gold);
+        }
+
+        [data-theme="dark"] .back-link:hover {
+            color: #fff;
+            background: rgba(215, 174, 108, 0.15);
+        }
+
+        [data-theme="dark"] .modal-content {
+            background: #2a2a2a;
+        }
+
+        [data-theme="dark"] .modal-header {
+            background: #2a2a2a;
+            border-bottom-color: rgba(215, 174, 108, 0.2);
+        }
+
+        [data-theme="dark"] .modal-header h3 {
+            color: #f0f0f0;
+        }
+
+        [data-theme="dark"] .upvoter-item {
+            border-bottom-color: #3a3a3a;
+        }
+
+        [data-theme="dark"] .upvoter-item:hover {
+            background: #333333;
+        }
+
+        [data-theme="dark"] .upvoter-name {
+            color: #f0f0f0;
+        }
+
+        [data-theme="dark"] .upvoter-stats {
+            color: #999;
         }
 
         .details-main {
@@ -135,6 +239,10 @@
             letter-spacing: 0.3px;
         }
 
+        [data-theme="dark"] .pdf-preview p {
+            color: #aaa;
+        }
+
         /* RIGHT COLUMN - DETAILS CARD */
         .info-sidebar {
             position: sticky;
@@ -191,6 +299,15 @@
             font-weight: 500;
         }
 
+        .detail-item-value[style*="cursor: pointer"] {
+            text-decoration: underline;
+            transition: all 0.2s ease;
+        }
+
+        .detail-item-value[style*="cursor: pointer"]:hover {
+            color: var(--coco-gold) !important;
+        }
+
         .category-badge {
             display: inline-flex;
             background: linear-gradient(135deg, rgba(215, 174, 108, 0.15) 0%, rgba(215, 174, 108, 0.08) 100%);
@@ -211,6 +328,10 @@
             margin-top: 28px;
             padding-top: 24px;
             border-top: 1px solid rgba(215, 174, 108, 0.2);
+        }
+
+        [data-theme="dark"] .action-buttons {
+            border-top-color: rgba(215, 174, 108, 0.15);
         }
 
         .download-btn-details {
@@ -289,6 +410,16 @@
             background: rgba(215, 174, 108, 0.08);
             border-color: rgba(215, 174, 108, 0.6);
             transform: translateY(-2px);
+        }
+
+        .btn-upvote-details .upvote-count {
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+
+        .btn-upvote-details:hover .upvote-count {
+            color: var(--coco-gold);
         }
 
         .btn-upvote-details.active-upvote {
@@ -435,8 +566,132 @@
             }
         }
     </style>
+
+    <!-- Upvoters Modal -->
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(215, 174, 108, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--earth-brown);
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--coco-gold);
+        }
+
+        .modal-body {
+            padding: 0;
+        }
+
+        .upvoter-item {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .upvoter-item:hover {
+            background: #fafaf8;
+        }
+
+        .upvoter-item:last-child {
+            border-bottom: none;
+        }
+
+        .upvoter-info {
+            flex: 1;
+        }
+
+        .upvoter-name {
+            font-weight: 600;
+            color: var(--earth-brown);
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .upvoter-stats {
+            font-size: 0.85rem;
+            color: #999;
+            display: flex;
+            gap: 12px;
+        }
+
+        .upvoter-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--coco-gold), var(--coco-earth));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-left: 16px;
+        }
+    </style>
 </head>
 <body>
+    <!-- Upvoters Modal -->
+    <div id="upvotersModal" class="modal-overlay" onclick="closeUpvotersModalOnBackdrop(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Who Upvoted This Note</h3>
+                <button class="modal-close" onclick="closeUpvotersModal()">✕</button>
+            </div>
+            <div id="upvotersList" class="modal-body"></div>
+        </div>
+    </div>
     <nav class="upper-nav">
         <div class="nav-content">
             <div class="nav-left">
@@ -452,6 +707,20 @@
 
             <div class="nav-right">
                 <button id="theme-toggle" class="icon-btn">🌓</button>
+                <div class="notification-wrapper" style="position: relative;">
+                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot"
+                            style="display: none;"></span></button>
+                    <div id="notif-dropdown" class="notification-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <button id="clear-notifs"
+                                style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
+                        </div>
+                        <div id="notif-list" class="notif-list-content">
+                            <p class="empty-msg">No new notifications</p>
+                        </div>
+                    </div>
+                </div>
                 <a href="profile.html" class="profile-circle">👤</a>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
@@ -470,6 +739,7 @@
         </div>
     </main>
 
+    <script src="../screens/notifications.js"></script>
     <script src="../screens/details.js"></script>
 </body>
 </html>

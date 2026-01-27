@@ -51,7 +51,40 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBadge(); // Check on load
     setupThemeToggle();
     setupLogout();
+    fetchNotifications(); // Fetch real notifications
+    
+    // Poll for new notifications every 10 seconds
+    setInterval(fetchNotifications, 10000);
 });
+
+// Fetch notifications from backend
+async function fetchNotifications() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/auth/notifications', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) return;
+
+        const notifications = await response.json();
+        saveNotificationsToStorage(notifications);
+        updateBadge();
+    } catch (err) {
+        console.error('Error fetching notifications:', err);
+    }
+}
+
+// Save notifications to localStorage and update badge
+function saveNotificationsToStorage(notifications) {
+    localStorage.setItem('backend_notifications', JSON.stringify(notifications));
+    
+    // Check if there are unread notifications
+    const hasUnread = notifications.some(n => !n.is_read);
+    localStorage.setItem('coco_has_unread', hasUnread ? 'true' : 'false');
+}
 
 function saveToHistory(message) {
     // Get existing
@@ -92,6 +125,8 @@ function setupNotificationDropdown() {
         } else {
             dropdown.classList.add('active');
             renderHistory();
+            // Mark all as read
+            markAllNotificationsAsRead();
             // Clear red dot when opened
             localStorage.setItem('coco_has_unread', 'false');
             updateBadge();
@@ -108,25 +143,68 @@ function setupNotificationDropdown() {
     // Clear All
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-            localStorage.removeItem('coco_notifications');
+            localStorage.removeItem('backend_notifications');
             renderHistory();
         });
     }
+}
+
+// Mark all unread notifications as read
+async function markAllNotificationsAsRead() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const notifications = JSON.parse(localStorage.getItem('backend_notifications') || '[]');
+    
+    for (const notif of notifications) {
+        if (!notif.is_read) {
+            try {
+                await fetch('/api/auth/notifications/read', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notification_id: notif.notification_id })
+                });
+            } catch (err) {
+                console.error('Error marking notification as read:', err);
+            }
+        }
+    }
+
+    // Refresh notifications
+    fetchNotifications();
 }
 
 function renderHistory() {
     const list = document.getElementById('notif-list');
     if (!list) return;
 
-    const data = JSON.parse(localStorage.getItem('coco_notifications') || '[]');
+    const backendNotifs = JSON.parse(localStorage.getItem('backend_notifications') || '[]');
+    const localNotifs = JSON.parse(localStorage.getItem('coco_notifications') || '[]');
 
-    if (data.length === 0) {
+    // Combine both sources, prioritize backend notifications
+    const allNotifs = [
+        ...backendNotifs.map(n => ({
+            msg: `${n.actor_name} ${n.action_type === 'upvote' ? '👍 upvoted' : '📥 downloaded'} your note: "${n.note_title}"`,
+            time: new Date(n.created_at).toLocaleString(),
+            is_read: n.is_read,
+            note_id: n.note_id,
+            notification_id: n.notification_id,
+            action_type: n.action_type
+        })),
+        ...localNotifs
+    ];
+
+    if (allNotifs.length === 0) {
         list.innerHTML = '<p class="empty-msg">No notifications yet 🥥</p>';
         return;
     }
 
-    list.innerHTML = data.map(item => `
-        <div class="notif-item">
+    list.innerHTML = allNotifs.map(item => `
+        <div class="notif-item ${item.is_read === false ? 'unread' : ''}" 
+             ${item.note_id ? `onclick="window.location.href='note-details.html?id=${item.note_id}'"` : ''}>
             <span>${item.msg}</span>
             <span class="notif-time">${item.time}</span>
         </div>

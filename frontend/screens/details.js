@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="detail-item">
                             <strong>Uploader</strong>
-                            <div class="detail-item-value">${note.uploader || 'N/A'}</div>
+                            <div class="detail-item-value" style="cursor: pointer; color: var(--coco-gold);" onclick="navigateToUserProfile(${note.uploader_id})">${note.uploader || 'N/A'}</div>
                         </div>
                         <div class="detail-item">
                             <strong>Date</strong>
@@ -117,18 +117,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function attachDetailsEventListeners(noteId) {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
     // Upvote button
     const upvoteBtn = document.querySelector('.btn-upvote-details');
     if (upvoteBtn) {
+        // Handle upvote count click to show modal
+        const countSpan = upvoteBtn.querySelector('.upvote-count');
+        if (countSpan) {
+            countSpan.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showUpvotersModal(noteId, token);
+            });
+        }
+
+        // Handle upvote button click for toggling
         upvoteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const token = localStorage.getItem('token');
             
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-
             try {
                 const response = await fetch('/api/notes/upvote/json', {
                     method: 'POST',
@@ -213,4 +224,62 @@ function attachDetailsEventListeners(noteId) {
             }
         });
     }
+}
+
+// Functions for upvoters modal
+function closeUpvotersModal() {
+    document.getElementById('upvotersModal').classList.remove('active');
+}
+
+function closeUpvotersModalOnBackdrop(event) {
+    if (event.target.id === 'upvotersModal') {
+        closeUpvotersModal();
+    }
+}
+
+async function showUpvotersModal(noteId, token) {
+    try {
+        const response = await fetch(`/api/notes/${noteId}/upvoters`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            alert('You can only view upvoters for your own notes');
+            return;
+        }
+
+        const upvoters = await response.json();
+        const upvotersList = document.getElementById('upvotersList');
+
+        if (upvoters.length === 0) {
+            upvotersList.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <p>No one has upvoted this note yet.</p>
+                </div>
+            `;
+        } else {
+            upvotersList.innerHTML = upvoters.map(user => `
+                <div class="upvoter-item" onclick="navigateToUserProfile(${user.user_id})">
+                    <div class="upvoter-info">
+                        <div class="upvoter-name">${user.name}</div>
+                        <div class="upvoter-stats">
+                            <span><i class="ri-file-text-line"></i> ${user.notes_uploaded} Notes</span>
+                            <span><i class="ri-download-line"></i> ${user.total_downloads} Downloads</span>
+                            <span><i class="ri-thumb-up-line"></i> ${user.total_upvotes} Upvotes</span>
+                        </div>
+                    </div>
+                    <div class="upvoter-avatar">👤</div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('upvotersModal').classList.add('active');
+    } catch (err) {
+        console.error('Error fetching upvoters:', err);
+        alert('Failed to load upvoters');
+    }
+}
+
+function navigateToUserProfile(userId) {
+    window.location.href = `user-profile.html?id=${userId}`;
 }

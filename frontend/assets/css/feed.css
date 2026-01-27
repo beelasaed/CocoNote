@@ -179,13 +179,29 @@
 .btn-coco-earth.small { padding: 6px 16px; font-size: 0.85rem; }
 
 .btn-coco-save {
-    background: var(--coco-cream);
-    border: none;
-    width: 35px; height: 35px;
-    border-radius: 8px;
+    background: white;
+    border: 1.5px solid rgba(215, 174, 108, 0.4);
+    width: 38px; 
+    height: 38px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 1.1rem;
-    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    color: var(--coco-earth);
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-coco-save:hover {
+    background: rgba(215, 174, 108, 0.1);
+    border-color: rgba(215, 174, 108, 0.6);
+    color: var(--coco-gold);
+    transform: scale(1.08);
+}
+
+.btn-coco-save:active {
+    transform: scale(0.96);
 }
 /* Style for when the user has upvoted */
 .btn-upvote.active-upvote {

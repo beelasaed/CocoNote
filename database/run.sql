@@ -10,6 +10,10 @@ CREATE SCHEMA public;
 \echo '... Creating Tables (Schema)'
 \i schema.sql
 
+-- 2b. Notifications Table
+\echo '... Creating Notifications Table'
+\i notifications.sql
+
 -- 3. Logic & Functions 
 -- (Functions must exist before Triggers can use them)
 \echo '...  Adding Functions'

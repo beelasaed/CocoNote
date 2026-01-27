@@ -24,8 +24,10 @@ const upload = multer({
 
 router.get('/options', protect, noteController.getUploadOptions);
 router.get('/feed', protect, noteController.getAllNotes);
+router.get('/my-notes', protect, noteController.getUserNotes);
 router.post('/upload', protect, upload.single('pdfFile'), noteController.uploadNote);
 router.get('/:note_id', protect, noteController.getNoteById);
+router.get('/:note_id/upvoters', protect, noteController.getNoteUpvoters);
 router.post('/upvote', protect, noteController.toggleUpvote);
 router.post('/download', protect, noteController.trackDownload);
 router.post('/upvote/json', protect, noteController.toggleUpvoteAJAX);

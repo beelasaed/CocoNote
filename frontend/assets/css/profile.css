@@ -74,14 +74,82 @@
 .stat-label { font-size: 0.8rem; color: #999; text-transform: uppercase; letter-spacing: 1px; }
 
 /* Badges Section */
-.section-subtitle { color: var(--coco-earth); font-size: 1rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+.section-subtitle { color: var(--coco-earth); font-size: 1.1rem; margin-bottom: 1.5rem; text-transform: capitalize; letter-spacing: 0.5px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
 .badges-grid { display: flex; gap: 2rem; flex-wrap: wrap; }
-.badge-item { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; width: 90px; text-align: center; cursor: help; }
-.badge-icon { width: 60px; height: 60px; background: var(--coco-cream); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 2px solid transparent; transition: 0.3s; }
-.badge-item span { font-size: 0.7rem; font-weight: 700; color: var(--coco-brown); }
+.badge-item { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 0.8rem; 
+    width: 100px; 
+    text-align: center; 
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.badge-item:hover .badge-icon {
+    transform: scale(1.1);
+}
+.badge-icon { 
+    width: 70px; 
+    height: 70px; 
+    background: linear-gradient(135deg, var(--coco-cream) 0%, rgba(215, 174, 108, 0.1) 100%);
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 2.2rem; 
+    border: 2px solid rgba(215, 174, 108, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+.badge-item span { 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    color: var(--coco-earth);
+    line-height: 1.2;
+}
 .gold-glow { border-color: var(--coco-gold); box-shadow: 0 0 15px rgba(212, 163, 115, 0.3); }
 .silver-glow { border-color: #adb5bd; box-shadow: 0 0 15px rgba(173, 181, 189, 0.3); }
-.badge-item.locked { opacity: 0.4; filter: grayscale(1); }
+.badge-item.locked { 
+    opacity: 0.6;
+}
+.badge-item.locked .badge-icon {
+    filter: grayscale(100%) brightness(0.9);
+}
+.lock-icon {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    background: #999;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.badge-tooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    z-index: 10000;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 /* Tabs & Note Rows */
 .profile-tabs { display: flex; gap: 2rem; border-bottom: 1px solid #eee; margin-bottom: 1.5rem; }
@@ -106,19 +174,5 @@
 .btn-coco-earth { background: var(--coco-earth); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; }
 .btn-coco-delete { background: #fee2e2; border: none; padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; }
 
-/* Tooltip */
+/* Badges tooltip handled via JavaScript */
 .tooltip { position: relative; }
-.tooltip:hover::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: 120%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--coco-earth);
-    color: white;
-    padding: 0.5rem 0.8rem;
-    border-radius: 0.5rem;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    z-index: 10;
-}

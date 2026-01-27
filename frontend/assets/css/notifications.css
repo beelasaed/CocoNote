@@ -138,10 +138,21 @@
     flex-direction: column;
     gap: 5px;
     transition: background-color 0.1s;
+    cursor: pointer;
 }
 
 .notif-item:last-child { border-bottom: none; }
 .notif-item:hover { background-color: var(--coco-cream); }
+
+/* Unread notification styling */
+.notif-item.unread {
+    background-color: rgba(212, 163, 115, 0.15);
+    border-left: 4px solid var(--coco-gold);
+}
+
+.notif-item.unread:hover {
+    background-color: rgba(212, 163, 115, 0.25);
+}
 
 /* Item Text Styles */
 .notif-item span:first-child {
