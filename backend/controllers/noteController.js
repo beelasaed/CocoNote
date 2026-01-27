@@ -50,16 +50,19 @@ exports.uploadNote = async (req, res) => {
 // --- 3. Get All Notes for Feed (UPDATED: Uses View) ---
 exports.getAllNotes = async (req, res) => {
     try {
-        // SELECTING FROM THE VIEW
-        // The complex JOIN logic is now hidden inside 'view_feed_details' (database/views.sql)
-        //const query = `SELECT * FROM view_feed_details ORDER BY created_at DESC`;
-        const user_id = req.user.user_id; // Get logged in user
-        const query = `SELECT * FROM get_personalized_feed($1)`;
-        const result = await pool.query(query, [user_id]);
-        res.json(result.rows);
+        const user_id = req.user.user_id;
+        const { dept } = req.query; // Get ?dept= from the URL
 
+        // We use 'null' if 'All' is selected to show everything
+        const departmentFilter = (dept && dept !== 'All') ? dept : null;
+
+        // Clean call to our new database function
+        const query = `SELECT * FROM get_filtered_feed($1, $2)`;
+        const result = await pool.query(query, [user_id, departmentFilter]);
+
+        res.json(result.rows);
     } catch (err) {
-        console.error("Error fetching notes:", err);
+        console.error("Error fetching filtered feed:", err);
         res.status(500).json({ message: "Server Error fetching feed" });
     }
 };
@@ -97,7 +100,7 @@ exports.toggleUpvote = async (req, res) => {
 exports.trackDownload = async (req, res) => {
     try {
         const { note_id } = req.body;
-        const user_id = req.user.user_id; // Ensure this matches your JWT payload structure
+        const user_id = req.user.user_id;
 
         if (!note_id) return res.status(400).json({ message: "note_id is required" });
 
