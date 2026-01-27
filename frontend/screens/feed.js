@@ -167,6 +167,23 @@ function renderFeed(notes) {
     attachEventListeners();
 }
 function attachEventListeners() {
+    // --- NOTE CARD CLICK LISTENER (Navigate to Details) ---
+    document.querySelectorAll('[data-note-id]').forEach(card => {
+        // Make the entire card clickable, but not if clicking on buttons
+        card.addEventListener('click', (e) => {
+            // Prevent navigation if clicking on a button
+            if (e.target.closest('button') || e.target.closest('a.btn-download')) {
+                return;
+            }
+            const noteId = card.dataset.noteId;
+            if (noteId) {
+                window.location.href = `note-details.html?id=${noteId}`;
+            }
+        });
+        // Add pointer cursor to indicate it's clickable
+        card.style.cursor = 'pointer';
+    });
+
     // --- UPVOTE LISTENER ---
     document.querySelectorAll('.btn-upvote').forEach(btn => {
         btn.addEventListener('click', async (e) => {

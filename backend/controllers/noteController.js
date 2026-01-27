@@ -67,6 +67,51 @@ exports.getAllNotes = async (req, res) => {
     }
 };
 
+// --- 3b. Get Note By ID ---
+exports.getNoteById = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        const user_id = req.user.user_id;
+
+        if (!note_id) return res.status(400).json({ message: "note_id is required" });
+
+        // Fetch the note with all related information
+        const result = await pool.query(`
+            SELECT 
+                n.note_id,
+                n.title,
+                n.description,
+                n.batch,
+                n.upvotes,
+                n.downloads,
+                n.file_path,
+                n.created_at,
+                c.name AS category,
+                co.code AS course_code,
+                co.name AS course_name,
+                d.name AS department,
+                u.name AS uploader,
+                u.student_id,
+                CASE WHEN EXISTS(SELECT 1 FROM upvote WHERE upvote.note_id = n.note_id AND upvote.user_id = $2) THEN true ELSE false END AS is_upvoted
+            FROM note n
+            LEFT JOIN category c ON n.category_id = c.category_id
+            LEFT JOIN course co ON n.course_id = co.course_id
+            LEFT JOIN departments d ON n.department_id = d.department_id
+            LEFT JOIN users u ON n.uploader_id = u.user_id
+            WHERE n.note_id = $1
+        `, [note_id, user_id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Note not found" });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Error fetching note:", err);
+        res.status(500).json({ message: "Server Error fetching note details" });
+    }
+};
+
 // --- 4. Toggle Upvote ---
 exports.toggleUpvote = async (req, res) => {
     try {
