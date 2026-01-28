@@ -320,3 +320,49 @@ exports.getLeaderboard = async (req, res) => {
         res.status(500).json({ message: "Server Error fetching leaderboard" });
     }
 };
+
+// --- 10. DELETE NOTIFICATION ---
+exports.deleteNotification = async (req, res) => {
+    try {
+        const { notification_id } = req.body;
+        const user_id = req.user.user_id;
+
+        const result = await pool.query(`
+            DELETE FROM notification 
+            WHERE notification_id = $1 AND recipient_user_id = $2
+            RETURNING notification_id
+        `, [notification_id, user_id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Notification not found" });
+        }
+
+        res.json({ message: "Notification deleted", notification_id });
+
+    } catch (err) {
+        console.error("Error deleting notification:", err);
+        res.status(500).json({ message: "Server Error deleting notification" });
+    }
+};
+
+// --- 11. DELETE ALL NOTIFICATIONS ---
+exports.deleteAllNotifications = async (req, res) => {
+    try {
+        const user_id = req.user.user_id;
+
+        const result = await pool.query(`
+            DELETE FROM notification 
+            WHERE recipient_user_id = $1
+            RETURNING notification_id
+        `, [user_id]);
+
+        res.json({ 
+            message: "All notifications deleted", 
+            deleted_count: result.rowCount 
+        });
+
+    } catch (err) {
+        console.error("Error deleting all notifications:", err);
+        res.status(500).json({ message: "Server Error deleting notifications" });
+    }
+};

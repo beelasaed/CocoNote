@@ -143,9 +143,41 @@ function setupNotificationDropdown() {
     // Clear All
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-            localStorage.removeItem('backend_notifications');
-            renderHistory();
+            clearAllNotifications();
         });
+    }
+}
+
+// Clear all notifications from database and localStorage
+async function clearAllNotifications() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/auth/notifications/delete-all', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            console.error('Error clearing notifications');
+            showToast('Failed to clear notifications');
+            return;
+        }
+
+        // Clear from localStorage
+        localStorage.removeItem('backend_notifications');
+        localStorage.removeItem('coco_notifications');
+        localStorage.removeItem('coco_has_unread');
+        
+        // Refresh UI
+        renderHistory();
+        updateBadge();
+    } catch (err) {
+        console.error('Error clearing notifications:', err);
     }
 }
 

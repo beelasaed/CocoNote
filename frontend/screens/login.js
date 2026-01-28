@@ -35,12 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 2. SUCCESS: Save Token & User Info
-                    // The token is your "digital ID card" for the rest of the app
+                    // 2. SUCCESS: Clear old user data
+                    localStorage.removeItem('backend_notifications');
+                    localStorage.removeItem('coco_notifications');
+                    localStorage.removeItem('coco_has_unread');
+
+                    // 3. Save New User Token & Info
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
 
-                    // 3. Redirect to Dashboard
+                    // 4. Redirect to Dashboard
                     window.location.href = 'dashboard.html';
                 } else {
                     // 4. ERROR: Show message (e.g., "Invalid Password")
