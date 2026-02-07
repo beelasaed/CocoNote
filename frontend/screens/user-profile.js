@@ -81,6 +81,129 @@ function renderUserProfile(user) {
             </div>
         </div>
     `;
+
+    // Add achievements section
+    addAchievementsSection(user);
+}
+
+function getAchievements(user) {
+    // Map of obtained badge names for easy lookup
+    const earnedBadges = new Set((user.badges || []).map(b => b.name));
+
+    // Define badge requirements and conditions
+    const badges = [
+        {
+            title: 'Getting Started',
+            icon: '📝',
+            description: 'Upload your first note',
+            achieved: earnedBadges.has('Getting Started')
+        },
+        {
+            title: 'Prolific Creator',
+            icon: '📚',
+            description: 'Upload 10 or more notes',
+            achieved: earnedBadges.has('Prolific Creator')
+        },
+        {
+            title: 'Popular Author',
+            icon: '⭐',
+            description: 'Receive 50 or more total upvotes',
+            achieved: earnedBadges.has('Popular Author')
+        },
+        {
+            title: 'Viral Creator',
+            icon: '🔥',
+            description: 'Get 200 or more total downloads',
+            achieved: earnedBadges.has('Viral Creator')
+        },
+        {
+            title: 'Coconut Expert',
+            icon: '🥥',
+            description: 'Earn 1,000 coconut points',
+            achieved: earnedBadges.has('Coconut Expert')
+        },
+        {
+            title: 'CocoNote Legend',
+            icon: '👑',
+            description: 'Upload 10+ notes, 50+ upvotes, 3000+ points',
+            achieved: earnedBadges.has('CocoNote Legend')
+        }
+    ];
+
+    return badges;
+}
+
+function addAchievementsSection(user) {
+    const badges = getAchievements(user);
+    const userSection = document.getElementById('userProfileSection');
+
+    // Remove existing achievements section if any
+    const existingSection = document.querySelector('.badges-card');
+    if (existingSection) existingSection.remove();
+
+    const section = document.createElement('section');
+    section.className = 'badges-card animate-up';
+    section.style.animationDelay = '0.1s';
+
+    section.innerHTML = `
+        <h3 class="section-subtitle"><i class="ri-award-line"></i> Achievements</h3>
+        <div class="badges-grid">
+            ${badges.map(badge => `
+                <div class="badge-item ${badge.achieved ? '' : 'locked'} tooltip" data-tip="<strong>${badge.title}</strong><br>${badge.description}<br><br><small>${badge.achieved ? '✅ Earned' : '🔒 Locked'}</small>">
+                    <div class="badge-icon" style="opacity: ${badge.achieved ? '1' : '0.4'}; filter: ${badge.achieved ? 'none' : 'grayscale(100%)'};">
+                        ${badge.icon}
+                    </div>
+                    ${!badge.achieved ? '<div class="lock-icon"><i class="ri-lock-line"></i></div>' : ''}
+                    <span>${badge.title}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    userSection.parentNode.insertBefore(section, userSection.nextSibling);
+
+    // Add tooltip functionality (Simple version)
+    // We can reuse the tooltip logic if it was global, but let's just add title for simple tooltip
+    // or copy helper if needed. For now relying on css tooltip or simple title.
+    // user-profile.js doesn't seem to have the tooltip logic, adding it.
+    addBadgeTooltips();
+}
+
+function addBadgeTooltips() {
+    const badges = document.querySelectorAll('.badge-item.tooltip');
+
+    badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function (e) {
+            const tooltip = document.querySelector('.badge-tooltip');
+            if (tooltip) tooltip.remove();
+
+            const tip = this.dataset.tip;
+            const tooltipEl = document.createElement('div');
+            tooltipEl.className = 'badge-tooltip';
+            tooltipEl.innerHTML = tip;
+
+            document.body.appendChild(tooltipEl);
+
+            const rect = this.getBoundingClientRect();
+            tooltipEl.style.position = 'fixed';
+            tooltipEl.style.zIndex = '1000';
+            tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 10) + 'px';
+            tooltipEl.style.left = (rect.left + rect.width / 2 - tooltipEl.offsetWidth / 2) + 'px';
+
+            // Basic Styling if not in CSS
+            tooltipEl.style.background = 'rgba(0,0,0,0.85)';
+            tooltipEl.style.color = '#fff';
+            tooltipEl.style.padding = '8px 12px';
+            tooltipEl.style.borderRadius = '6px';
+            tooltipEl.style.fontSize = '0.8rem';
+            tooltipEl.style.pointerEvents = 'none';
+        });
+
+        badge.addEventListener('mouseleave', function () {
+            const tooltip = document.querySelector('.badge-tooltip');
+            if (tooltip) tooltip.remove();
+        });
+    });
 }
 
 async function loadUserNotes(userId, token) {

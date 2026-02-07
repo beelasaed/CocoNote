@@ -99,6 +99,7 @@ exports.getDepartments = async (req, res) => {
 };
 
 // ---- GET CURRENT USER PROFILE ---
+// ---- GET CURRENT USER PROFILE ---
 exports.getCurrentUser = async (req, res) => {
     try {
         const user_id = req.user.user_id;
@@ -137,11 +138,21 @@ exports.getCurrentUser = async (req, res) => {
 
         const stats = statsResult.rows[0];
 
+        // Get earned badges
+        const badgesResult = await pool.query(`
+            SELECT b.name, b.description, ub.earned_at
+            FROM user_badge ub
+            JOIN badge b ON ub.badge_id = b.badge_id
+            WHERE ub.user_id = $1
+            ORDER BY ub.earned_at DESC
+        `, [user_id]);
+
         res.json({
             ...user,
             notes_uploaded: parseInt(stats.notes_uploaded),
             total_downloads: parseInt(stats.total_downloads),
-            total_upvotes: parseInt(stats.total_upvotes)
+            total_upvotes: parseInt(stats.total_upvotes),
+            badges: badgesResult.rows
         });
 
     } catch (err) {
@@ -228,6 +239,7 @@ exports.getUnreadCount = async (req, res) => {
 };
 
 // --- 8. GET PUBLIC USER PROFILE (Limited Info) ---
+// --- 8. GET PUBLIC USER PROFILE (Limited Info) ---
 exports.getPublicUserProfile = async (req, res) => {
     try {
         const { user_id } = req.params;
@@ -267,11 +279,21 @@ exports.getPublicUserProfile = async (req, res) => {
 
         const stats = statsResult.rows[0];
 
+        // Get earned badges
+        const badgesResult = await pool.query(`
+            SELECT b.name, b.description, ub.earned_at
+            FROM user_badge ub
+            JOIN badge b ON ub.badge_id = b.badge_id
+            WHERE ub.user_id = $1
+            ORDER BY ub.earned_at DESC
+        `, [user_id]);
+
         res.json({
             ...user,
             notes_uploaded: parseInt(stats.notes_uploaded),
             total_downloads: parseInt(stats.total_downloads),
-            total_upvotes: parseInt(stats.total_upvotes)
+            total_upvotes: parseInt(stats.total_upvotes),
+            badges: badgesResult.rows
         });
 
     } catch (err) {

@@ -302,42 +302,46 @@ function formatNumber(num) {
 }
 
 function getAchievements(user) {
+    // Map of obtained badge names for easy lookup
+    const earnedBadges = new Set((user.badges || []).map(b => b.name));
+
     // Define badge requirements and conditions
+    // We check against user stats for progress, but use earnedBadges for 'achieved' state to trust server source of truth (triggers)
     const badges = [
         {
             id: 'first-note',
             title: 'Getting Started',
             icon: '📝',
             description: 'Upload your first note',
-            requirement: 'notes_uploaded >= 1',
-            achieved: (user.notes_uploaded || 0) >= 1,
+            requirement: 'Upload at least 1 note',
+            achieved: earnedBadges.has('Getting Started'),
             progress: `${user.notes_uploaded || 0}/1 notes`
         },
         {
             id: 'prolific-creator',
             title: 'Prolific Creator',
             icon: '📚',
-            description: 'Upload 10 or more high-quality notes',
-            requirement: 'notes_uploaded >= 10',
-            achieved: (user.notes_uploaded || 0) >= 10,
+            description: 'Upload 10 or more notes',
+            requirement: 'Upload 10 or more notes',
+            achieved: earnedBadges.has('Prolific Creator'),
             progress: `${user.notes_uploaded || 0}/10 notes`
         },
         {
             id: 'popular-author',
             title: 'Popular Author',
             icon: '⭐',
-            description: 'Get 50+ total upvotes across all notes',
-            requirement: 'total_upvotes >= 50',
-            achieved: (user.total_upvotes || 0) >= 50,
+            description: 'Receive 50 or more total upvotes',
+            requirement: 'Receive 50 or more total upvotes',
+            achieved: earnedBadges.has('Popular Author'),
             progress: `${user.total_upvotes || 0}/50 upvotes`
         },
         {
             id: 'viral-creator',
             title: 'Viral Creator',
             icon: '🔥',
-            description: 'Get 200+ total downloads across all notes',
-            requirement: 'total_downloads >= 200',
-            achieved: (user.total_downloads || 0) >= 200,
+            description: 'Get 200 or more total downloads',
+            requirement: 'Get 200 or more total downloads',
+            achieved: earnedBadges.has('Viral Creator'),
             progress: `${user.total_downloads || 0}/200 downloads`
         },
         {
@@ -345,17 +349,17 @@ function getAchievements(user) {
             title: 'Coconut Expert',
             icon: '🥥',
             description: 'Earn 1,000 coconut points',
-            requirement: 'total_points >= 1000',
-            achieved: (user.total_points || 0) >= 1000,
+            requirement: 'Earn 1,000 coconut points',
+            achieved: earnedBadges.has('Coconut Expert'),
             progress: `${user.total_points || 0}/1000 points`
         },
         {
             id: 'legend',
             title: 'CocoNote Legend',
             icon: '👑',
-            description: 'Achieve all other badges and reach 3,000 points',
-            requirement: 'all conditions met',
-            achieved: (user.total_points || 0) >= 3000 && (user.notes_uploaded || 0) >= 10 && (user.total_upvotes || 0) >= 50,
+            description: 'Upload 10+ notes, 50+ upvotes, 3000+ points',
+            requirement: 'All milestones + 3000 points',
+            achieved: earnedBadges.has('CocoNote Legend'),
             progress: 'Ultimate achievement'
         }
     ];
@@ -381,7 +385,7 @@ function addAchievementsSection(user) {
         <h3 class="section-subtitle"><i class="ri-award-line"></i> Achievements</h3>
         <div class="badges-grid">
             ${badges.map(badge => `
-                <div class="badge-item ${badge.achieved ? '' : 'locked'} tooltip" data-tip="${badge.description}${badge.progress ? '<br><small>Progress: ' + badge.progress + '</small>' : ''}">
+                <div class="badge-item ${badge.achieved ? '' : 'locked'} tooltip" data-tip="<strong>${badge.title}</strong><br>${badge.description}<br><br><small>${badge.achieved ? '✅ Earned' : '🔒 Locked'}<br>Progress: ${badge.progress}</small>">
                     <div class="badge-icon" style="opacity: ${badge.achieved ? '1' : '0.4'}; filter: ${badge.achieved ? 'none' : 'grayscale(100%)'};">
                         ${badge.icon}
                     </div>
