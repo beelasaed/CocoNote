@@ -103,21 +103,39 @@
 }
 .ranking-list-header {
     display: grid;
-    grid-template-columns: 80px 1fr 1fr 100px 100px;
-    padding: 1rem;
-    border-bottom: 1px solid #eee;
+    grid-template-columns: 80px 2fr 1.5fr 150px;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid #eee;
     font-weight: 700;
     color: var(--coco-earth);
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    align-items: center;
 }
 .rank-row {
     display: grid;
-    grid-template-columns: 80px 1fr 1fr 100px 100px;
-    padding: 1.2rem 1rem;
-    border-bottom: 1px solid #f9f9f9;
+    grid-template-columns: 80px 2fr 1.5fr 150px;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f0f0f0;
     align-items: center;
-    transition: 0.2s;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.rank-row:hover { 
+    background: var(--coco-cream); 
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-radius: 12px;
+    border-bottom: 1px solid transparent; 
+}
+
+@media (max-width: 768px) {
+    .ranking-list-header, .rank-row {
+        grid-template-columns: 60px 1fr 120px;
+        padding: 1rem;
+    }
+    .hide-mobile { display: none; }
 }
 .rank-row:hover { background: var(--coco-cream); border-radius: 1rem; }
 .rank-number { font-weight: 800; color: var(--coco-gold); }

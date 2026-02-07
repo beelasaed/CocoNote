@@ -103,6 +103,44 @@ exports.getUserNotes = async (req, res) => {
     }
 };
 
+// --- Notes By Specific User (Public Profile) ---
+exports.getNotesByUser = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+
+        if (!user_id) return res.status(400).json({ message: "User ID is required" });
+
+        const result = await pool.query(`
+            SELECT 
+                n.note_id,
+                n.title,
+                n.description,
+                n.batch,
+                n.upvotes,
+                n.downloads,
+                n.created_at,
+                c.name AS category,
+                co.code AS course_code,
+                co.name AS course,
+                d.name AS department,
+                u.name AS uploader,
+                n.uploader_id
+            FROM note n
+            LEFT JOIN category c ON n.category_id = c.category_id
+            LEFT JOIN course co ON n.course_id = co.course_id
+            LEFT JOIN departments d ON n.department_id = d.department_id
+            LEFT JOIN users u ON n.uploader_id = u.user_id
+            WHERE n.uploader_id = $1
+            ORDER BY n.created_at DESC
+        `, [user_id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching notes by user:", err);
+        res.status(500).json({ message: "Server Error fetching notes by user" });
+    }
+};
+
 // --- Get Note By ID ---
 exports.getNoteById = async (req, res) => {
     try {

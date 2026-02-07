@@ -66,6 +66,10 @@ function renderUserProfile(user) {
 
         <div class="user-stats-bar">
             <div class="stat-box">
+                <span class="stat-num" style="color: var(--coco-gold);">${formatNumber(user.total_points || 0)}</span>
+                <span class="stat-label">Coco Points</span>
+            </div>
+            <div class="stat-box">
                 <span class="stat-num">${user.notes_uploaded || 0}</span>
                 <span class="stat-label">Notes Uploaded</span>
             </div>

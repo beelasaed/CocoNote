@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('ranking-list-container');
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
         window.location.href = 'login.html';
         return;
@@ -35,8 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <span class="rank-number">#${user.rank}</span>
                 <span style="font-weight: 600;">${user.name}</span>
                 <span class="hide-mobile" style="color: #888;">${user.department || 'N/A'}</span>
-                <span class="rank-upvotes">${user.total_upvotes}</span>
-                <span class="rank-downloads">${user.total_downloads}</span>
+                <span class="rank-points" style="color: var(--coco-gold); font-weight: bold;">${user.total_score} 🥥</span>
             </div>
         `).join('');
 
@@ -49,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function updatePodium(topThree) {
     // Get podium sections
     const podiumItems = document.querySelectorAll('.podium-item');
-    
+
     // Map: rank index 0 (1st) -> gold (middle), 1 (2nd) -> silver (left), 2 (3rd) -> bronze (right)
     const positionMap = {
         0: 1, // 1st place -> gold (podium-item[1])
@@ -60,21 +59,21 @@ function updatePodium(topThree) {
     topThree.forEach((user, index) => {
         const podiumIndex = positionMap[index];
         const podium = podiumItems[podiumIndex];
-        
+
         if (podium) {
             const h3 = podium.querySelector('h3');
             const deptTag = podium.querySelector('.dept-tag');
             const pointsPill = podium.querySelector('.points-pill');
-            
+
             h3.textContent = user.name;
             h3.style.cursor = 'pointer';
             h3.onclick = (e) => {
                 e.stopPropagation();
                 navigateToUserProfile(user.user_id);
             };
-            
+
             deptTag.textContent = user.department || 'N/A';
-            pointsPill.textContent = `${user.total_upvotes} 👍 | ${user.total_downloads} 📥`;
+            pointsPill.textContent = `${user.total_score} Coco Points 🥥`;
             pointsPill.style.cursor = 'pointer';
             pointsPill.onclick = (e) => {
                 e.stopPropagation();

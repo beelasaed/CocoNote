@@ -255,6 +255,7 @@ exports.getPublicUserProfile = async (req, res) => {
                 u.name,
                 u.batch,
                 u.created_at,
+                u.total_points, -- Added total_points
                 d.name AS department
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.department_id
@@ -310,17 +311,17 @@ exports.getLeaderboard = async (req, res) => {
                 u.user_id,
                 u.name,
                 u.batch,
+                u.total_points, -- Use total_points directly
                 d.name AS department,
                 COUNT(DISTINCT n.note_id) AS notes_uploaded,
                 COALESCE(SUM(n.downloads), 0) AS total_downloads,
-                COALESCE(SUM(n.upvotes), 0) AS total_upvotes,
-                (COALESCE(SUM(n.downloads), 0) + COALESCE(SUM(n.upvotes), 0)) AS total_score
+                COALESCE(SUM(n.upvotes), 0) AS total_upvotes
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.department_id
             LEFT JOIN note n ON n.uploader_id = u.user_id
-            GROUP BY u.user_id, u.name, u.batch, d.name
+            GROUP BY u.user_id, u.name, u.batch, u.total_points, d.name
             HAVING COUNT(DISTINCT n.note_id) > 0
-            ORDER BY total_score DESC
+            ORDER BY u.total_points DESC
             LIMIT 100
         `);
 
@@ -331,7 +332,7 @@ exports.getLeaderboard = async (req, res) => {
             notes_uploaded: parseInt(row.notes_uploaded),
             total_downloads: parseInt(row.total_downloads),
             total_upvotes: parseInt(row.total_upvotes),
-            total_score: parseInt(row.total_score)
+            total_score: parseInt(row.total_points) // Map total_points to total_score for frontend compat or use total_points directly
         }));
 
         res.json(leaderboard);
