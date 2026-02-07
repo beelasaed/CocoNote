@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deptTitle) deptTitle.innerText = `${dept} Department Notes`;
 
     fetchNotes();
+    fetchRecommendations();
 
     const searchInput = document.getElementById('note-search');
     const batchFilter = document.getElementById('batch-filter');
@@ -16,6 +17,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (catFilter) catFilter.addEventListener('change', applyFilters);
 
 });
+
+async function fetchRecommendations() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/notes/recommendations', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const notes = await response.json();
+
+        if (response.ok && notes.length > 0) {
+            const container = document.getElementById('recommended-notes-container');
+            const section = document.getElementById('recommended-section');
+
+            if (container && section) {
+                section.style.display = 'block';
+                container.innerHTML = notes.map(n => {
+                    const activeClass = n.is_upvoted ? 'active-upvote' : '';
+                    // Reusing the Popular Card Style for Recommendations
+                    return `
+                    <div class="popular-card" data-note-id="${n.note_id}" onclick="window.location.href='note-details.html?id=${n.note_id}'" style="cursor: pointer; border-color: rgba(215, 174, 108, 0.4);">
+                        <span class="category-tag">Match: ${(n.relevance_score || 0) > 80 ? 'High' : 'Medium'}</span>
+                        <h4 style="margin: 12px 0; font-size: 1.25rem; font-weight: 700;">${n.title}</h4>
+                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 12px;">${n.course_code || 'General'} • Batch ${n.batch}</p>
+                        <div class="stats-row-aesthetic">
+                            <div class="stat-pill">
+                                <span class="icon">🥥</span> <span>${n.upvotes || 0}</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="icon">⬇️</span> <span>${n.downloads || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('');
+            }
+        }
+    } catch (err) { console.error("Error fetching recommendations:", err); }
+}
 
 let allNotes = [];
 

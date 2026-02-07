@@ -99,6 +99,7 @@ exports.getDepartments = async (req, res) => {
 };
 
 // ---- GET CURRENT USER PROFILE ---
+// ---- GET CURRENT USER PROFILE ---
 exports.getCurrentUser = async (req, res) => {
     try {
         const user_id = req.user.user_id;
@@ -137,11 +138,21 @@ exports.getCurrentUser = async (req, res) => {
 
         const stats = statsResult.rows[0];
 
+        // Get earned badges
+        const badgesResult = await pool.query(`
+            SELECT b.name, b.description, ub.earned_at
+            FROM user_badge ub
+            JOIN badge b ON ub.badge_id = b.badge_id
+            WHERE ub.user_id = $1
+            ORDER BY ub.earned_at DESC
+        `, [user_id]);
+
         res.json({
             ...user,
             notes_uploaded: parseInt(stats.notes_uploaded),
             total_downloads: parseInt(stats.total_downloads),
-            total_upvotes: parseInt(stats.total_upvotes)
+            total_upvotes: parseInt(stats.total_upvotes),
+            badges: badgesResult.rows
         });
 
     } catch (err) {
@@ -228,6 +239,7 @@ exports.getUnreadCount = async (req, res) => {
 };
 
 // --- 8. GET PUBLIC USER PROFILE (Limited Info) ---
+// --- 8. GET PUBLIC USER PROFILE (Limited Info) ---
 exports.getPublicUserProfile = async (req, res) => {
     try {
         const { user_id } = req.params;
@@ -243,6 +255,7 @@ exports.getPublicUserProfile = async (req, res) => {
                 u.name,
                 u.batch,
                 u.created_at,
+                u.total_points, -- Added total_points
                 d.name AS department
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.department_id
@@ -267,11 +280,21 @@ exports.getPublicUserProfile = async (req, res) => {
 
         const stats = statsResult.rows[0];
 
+        // Get earned badges
+        const badgesResult = await pool.query(`
+            SELECT b.name, b.description, ub.earned_at
+            FROM user_badge ub
+            JOIN badge b ON ub.badge_id = b.badge_id
+            WHERE ub.user_id = $1
+            ORDER BY ub.earned_at DESC
+        `, [user_id]);
+
         res.json({
             ...user,
             notes_uploaded: parseInt(stats.notes_uploaded),
             total_downloads: parseInt(stats.total_downloads),
-            total_upvotes: parseInt(stats.total_upvotes)
+            total_upvotes: parseInt(stats.total_upvotes),
+            badges: badgesResult.rows
         });
 
     } catch (err) {
@@ -288,17 +311,17 @@ exports.getLeaderboard = async (req, res) => {
                 u.user_id,
                 u.name,
                 u.batch,
+                u.total_points, -- Use total_points directly
                 d.name AS department,
                 COUNT(DISTINCT n.note_id) AS notes_uploaded,
                 COALESCE(SUM(n.downloads), 0) AS total_downloads,
-                COALESCE(SUM(n.upvotes), 0) AS total_upvotes,
-                (COALESCE(SUM(n.downloads), 0) + COALESCE(SUM(n.upvotes), 0)) AS total_score
+                COALESCE(SUM(n.upvotes), 0) AS total_upvotes
             FROM users u
             LEFT JOIN departments d ON u.department_id = d.department_id
             LEFT JOIN note n ON n.uploader_id = u.user_id
-            GROUP BY u.user_id, u.name, u.batch, d.name
+            GROUP BY u.user_id, u.name, u.batch, u.total_points, d.name
             HAVING COUNT(DISTINCT n.note_id) > 0
-            ORDER BY total_score DESC
+            ORDER BY u.total_points DESC
             LIMIT 100
         `);
 
@@ -309,7 +332,7 @@ exports.getLeaderboard = async (req, res) => {
             notes_uploaded: parseInt(row.notes_uploaded),
             total_downloads: parseInt(row.total_downloads),
             total_upvotes: parseInt(row.total_upvotes),
-            total_score: parseInt(row.total_score)
+            total_score: parseInt(row.total_points) // Map total_points to total_score for frontend compat or use total_points directly
         }));
 
         res.json(leaderboard);
@@ -320,7 +343,27 @@ exports.getLeaderboard = async (req, res) => {
     }
 };
 
-// --- 10. DELETE NOTIFICATION ---
+// --- 10. MARK NOTIFICATION AS READ ---
+exports.markNotificationAsRead = async (req, res) => {
+    try {
+        const { notification_id } = req.body;
+        const user_id = req.user.user_id;
+
+        await pool.query(`
+            UPDATE notification 
+            SET is_read = TRUE 
+            WHERE notification_id = $1 AND recipient_user_id = $2
+        `, [notification_id, user_id]);
+
+        res.json({ message: "Notification marked as read" });
+
+    } catch (err) {
+        console.error("Error marking notification as read:", err);
+        res.status(500).json({ message: "Server Error marking notification read" });
+    }
+};
+
+// --- 11. DELETE NOTIFICATION ---
 exports.deleteNotification = async (req, res) => {
     try {
         const { notification_id } = req.body;

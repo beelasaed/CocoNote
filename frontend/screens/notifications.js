@@ -70,10 +70,117 @@ async function fetchNotifications() {
         if (!response.ok) return;
 
         const notifications = await response.json();
+
+        // --- CHECK FOR NEW BADGES ---
+        const oldNotifs = JSON.parse(localStorage.getItem('backend_notifications') || '[]');
+        const newBadgeNotifs = notifications.filter(n =>
+            n.action_type === 'badge_earned' &&
+            !n.is_read && // Only popup for unread badges
+            !oldNotifs.some(old => old.notification_id === n.notification_id)
+        );
+
+        if (newBadgeNotifs.length > 0) {
+            newBadgeNotifs.forEach(n => {
+                showBadgePopup(n.message);
+                // We no longer mark as read here. The user marks it read by clicking the notification icon.
+            });
+        }
+        // ----------------------------
+
         saveNotificationsToStorage(notifications);
         updateBadge();
     } catch (err) {
         console.error('Error fetching notifications:', err);
+    }
+}
+
+// --- BADGE CELEBRATION ---
+function showBadgePopup(message) {
+    // 1. Trigger Confetti
+    triggerConfetti();
+
+    // 2. Create Modal
+    const modal = document.createElement('div');
+    modal.className = 'badge-popup-modal';
+    modal.innerHTML = `
+        <div class="badge-popup-content animate-pop">
+            <div class="badge-glow"></div>
+            <div style="font-size: 5rem; margin-bottom: 10px;">🏆</div>
+            <h2 style="color: var(--earth-brown); margin: 10px 0;">New Badge Unlocked!</h2>
+            <p style="color: #666; margin-bottom: 20px;">${message || "You've just earned a new achievement."}</p>
+            <button onclick="this.closest('.badge-popup-modal').remove()" style="
+                background: var(--coco-gold); 
+                color: white; 
+                border: none; 
+                padding: 10px 24px; 
+                border-radius: 8px; 
+                font-weight: 600; 
+                cursor: pointer;
+                transition: transform 0.2s;
+            ">Awesome!</button>
+        </div>
+        <style>
+            .badge-popup-modal {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex; justify-content: center; align-items: center;
+                z-index: 10000;
+                backdrop-filter: blur(4px);
+            }
+            .badge-popup-content {
+                background: white;
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                position: relative;
+                overflow: hidden;
+                border: 2px solid var(--coco-gold);
+            }
+            .badge-glow {
+                position: absolute;
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                width: 200px; height: 200px;
+                background: radial-gradient(circle, rgba(215, 174, 108, 0.4) 0%, transparent 70%);
+                z-index: -1;
+                animation: rotate 10s linear infinite;
+            }
+            .animate-pop {
+                animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            @keyframes popIn {
+                from { transform: scale(0.5); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+            @keyframes rotate {
+                from { transform: translate(-50%, -50%) rotate(0deg); }
+                to { transform: translate(-50%, -50%) rotate(360deg); }
+            }
+        </style>
+    `;
+    document.body.appendChild(modal);
+}
+
+function triggerConfetti() {
+    // Check if canvas-confetti is loaded, if not load it
+    if (typeof confetti === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+        script.onload = () => {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        };
+        document.body.appendChild(script);
+    } else {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
     }
 }
 
@@ -221,6 +328,7 @@ function renderHistory() {
         ...backendNotifs.map(n => {
             let actionMsg = '📥 downloaded';
             let icon = '📥';
+            let message = '';
 
             if (n.action_type === 'upvote') {
                 actionMsg = '👍 upvoted';
@@ -228,10 +336,22 @@ function renderHistory() {
             } else if (n.action_type === 'save') {
                 actionMsg = '🔖 saved';
                 icon = '🔖';
+            } else if (n.action_type === 'badge_earned') {
+                // Special case for badges
+                return {
+                    msg: `🎉 You earned a new badge! Check your profile.`,
+                    time: new Date(n.created_at).toLocaleString(),
+                    is_read: n.is_read,
+                    note_id: null, // Badges don't link to a note usually, or link into profile
+                    notification_id: n.notification_id,
+                    action_type: n.action_type
+                };
             }
 
+            message = `${n.actor_name} ${actionMsg} your note: "${n.note_title || 'Unknown Note'}"`;
+
             return {
-                msg: `${n.actor_name} ${actionMsg} your note: "${n.note_title}"`,
+                msg: message,
                 time: new Date(n.created_at).toLocaleString(),
                 is_read: n.is_read,
                 note_id: n.note_id,
@@ -292,4 +412,22 @@ function setupLogout() {
             window.location.href = 'login.html';
         });
     });
+}
+
+async function markNotificationRead(notificationId) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        await fetch('/api/auth/notifications/read', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ notification_id: notificationId })
+        });
+    } catch (err) {
+        console.error('Error marking notification as read:', err);
+    }
 }

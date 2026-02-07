@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="../assets/css/notifications.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.min.css">
 </head>
+
 <body class="feed-body">
 
     <nav class="upper-nav">
@@ -16,7 +18,7 @@
             <div class="nav-left">
                 <span class="nav-logo">🥥 CocoNote</span>
             </div>
-            
+
             <div class="nav-center">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="feed.html" class="nav-link active">Feed</a>
@@ -27,11 +29,13 @@
             <div class="nav-right">
                 <button id="theme-toggle" class="icon-btn">🌓</button>
                 <div class="notification-wrapper" style="position: relative;">
-                <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot" style="display: none;"></span></button>
-                <div id="notif-dropdown" class="notification-dropdown">
+                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot"
+                            style="display: none;"></span></button>
+                    <div id="notif-dropdown" class="notification-dropdown">
                         <div class="notif-header">
                             <span>Notifications</span>
-                            <button id="clear-notifs" style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
+                            <button id="clear-notifs"
+                                style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
                         </div>
                         <div id="notif-list" class="notif-list-content">
                             <p class="empty-msg">No new notifications</p>
@@ -47,7 +51,7 @@
     <main class="feed-main-content">
         <header class="dept-header animate-up">
             <h1 id="dept-title-heading" class="earthy-title">Department Notes</h1>
-            
+
             <div class="filter-card-system">
                 <div class="search-row">
                     <input type="text" id="note-search" placeholder="Search by Title or Course Code...">
@@ -72,19 +76,27 @@
             </div>
         </header>
 
+        <section class="notes-section animate-up" id="recommended-section" style="display: none;">
+            <h2 class="section-subtitle">✨ Recommended for You</h2>
+            <div class="popular-grid" id="recommended-notes-container">
+                <!-- Recommendations will be injected here -->
+            </div>
+        </section>
+
         <section class="notes-section animate-up">
             <h2 class="section-subtitle">🔥 Popular Notes</h2>
             <div class="popular-grid" id="popular-notes-container">
-                </div>
+            </div>
         </section>
 
         <section class="notes-section animate-up" style="animation-delay: 0.2s;">
             <h2 class="section-subtitle">📚 All Notes</h2>
             <div class="all-notes-list" id="all-notes-container">
-                </div>
+            </div>
         </section>
     </main>
     <script src="../screens/notifications.js"></script>
     <script src="../screens/feed.js"></script>
 </body>
+
 </html>

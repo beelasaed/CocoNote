@@ -31,8 +31,12 @@ INSERT INTO category(name) VALUES ('Lecture Slides'), ('Lab'), ('Past Papers'), 
 
 -- 5. Badges --
 INSERT INTO badge(name, description, points_required) VALUES
-('Top Contributor','Uploaded 10+ notes', 10),
-('Master Contributor','Uploaded 20+ notes', 20);
+('Getting Started', 'Upload at least 1 note', 0),
+('Prolific Creator', 'Upload 10 or more notes', 0),
+('Popular Author', 'Receive 50 or more total upvotes', 0),
+('Viral Creator', 'Get 200 or more total downloads', 0),
+('Coconut Expert', 'Earn 1,000 coconut points', 1000),
+('CocoNote Legend', 'Upload 10+ notes, 50+ upvotes, 3000+ points', 3000);
 
 -- 6. Users --
 INSERT INTO users(name, student_id, email, password, batch, department_id, total_points) VALUES

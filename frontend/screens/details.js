@@ -105,16 +105,56 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             </div>
+
+            <!-- RELATED NOTES SECTION -->
+            <div id="related-notes-section" style="grid-column: 1 / -1; margin-top: 40px; display: none;">
+                <h3 style="color: var(--earth-brown); margin-bottom: 20px;">Students who downloaded this also downloaded...</h3>
+                <div id="related-notes-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+                    <!-- Related notes injected here -->
+                </div>
+            </div>
         `;
 
         // Attach event listeners
         attachDetailsEventListeners(noteId);
+        fetchRelatedNotes(noteId, token); // Fetch related notes
 
     } catch (err) {
         console.error('Error:', err);
         container.innerHTML = '<div class="error-message">Failed to load note details. Please try again.</div>';
     }
 });
+
+async function fetchRelatedNotes(noteId, token) {
+    try {
+        const response = await fetch(`/api/notes/related/${noteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const notes = await response.json();
+
+        if (response.ok && notes.length > 0) {
+            const section = document.getElementById('related-notes-section');
+            const grid = document.getElementById('related-notes-grid');
+
+            if (section && grid) {
+                section.style.display = 'block';
+                grid.innerHTML = notes.map(n => `
+                    <div class="note-details-card" onclick="window.location.href='note-details.html?id=${n.note_id}'" style="cursor: pointer; padding: 20px; transition: transform 0.2s;">
+                        <span style="font-size: 0.8rem; background: var(--coco-cream); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
+                            ${n.common_download_count} common downloads
+                        </span>
+                        <h4 style="margin: 0 0 10px 0; font-size: 1rem; border: none; padding: 0;">${n.title}</h4>
+                        <div style="font-size: 0.85rem; color: #666;">
+                            ${n.course_code || 'General'} • Batch ${n.batch}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+    } catch (err) {
+        console.error("Error fetching related notes:", err);
+    }
+}
 
 function attachDetailsEventListeners(noteId) {
     const token = localStorage.getItem('token');
