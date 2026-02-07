@@ -1,36 +1,285 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const noteId = params.get('id');
-    const note = CocoAPI.getNoteById(noteId) || CocoAPI.getNotes()[0];
     const container = document.getElementById('noteDetailView');
+    const token = localStorage.getItem('token');
 
-    if (container) {
+    console.log('Note ID from URL:', noteId);
+    console.log('Token exists:', !!token);
+
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    if (!noteId) {
+        container.innerHTML = '<div class="error-message">Invalid note ID</div>';
+        return;
+    }
+
+    try {
+        // Fetch note details from API
+        const response = await fetch(`/api/notes/${noteId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to fetch note');
+        }
+
+        const note = data;
+
+        // Format the date
+        const createdDate = new Date(note.created_at);
+        const dateString = createdDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+
+        // Build the HTML
+        const activeClass = note.is_upvoted ? 'active-upvote' : '';
+
         container.innerHTML = `
-            <div class="detail-grid" style="display: grid; grid-template-columns: 1fr 320px; gap: 30px;">
-                <div class="pdf-section">
-                    <h1 style="color: var(--earth-brown); margin-bottom: 10px;">${note.title}</h1>
-                    <p style="margin-bottom: 20px; color: var(--text-gray);">${note.description}</p>
-                    <div style="width:100%; height:500px; background:#e0e0e0; border-radius:15px; display:flex; align-items:center; justify-content:center; border: 2px dashed var(--soft-gold);">
-                        <div style="text-align:center">
-                            <i class="ri-file-pdf-fill" style="font-size: 4rem; color: var(--earth-brown);"></i>
-                            <p>PDF Binary Stream Preview</p>
+            <div class="pdf-section">
+                <h1>${note.title}</h1>
+                <p>${note.description || 'No description provided'}</p>
+                <div class="pdf-preview" id="pdfPreviewContainer">
+                    ${note.file_path ? `<embed src="${note.file_path}#toolbar=0" type="application/pdf" style="width: 100%; height: 100%; border: none; border-radius: 20px;" />` : `
+                    <i class="ri-file-pdf-fill"></i>
+                    <p>PDF Binary Stream Preview</p>
+                    `}
+                </div>
+            </div>
+            <div class="info-sidebar">
+                <div class="note-details-card">
+                    <h4>📋 Note Details</h4>
+                    <div class="details-list">
+                        <div class="detail-item">
+                            <strong>Course</strong>
+                            <div class="detail-item-value">${note.course_name || 'N/A'}</div>
+                            <div style="font-size: 0.85rem; color: #999; margin-top: 2px;">${note.course_code || ''}</div>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Batch</strong>
+                            <div class="detail-item-value">${note.batch || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Department</strong>
+                            <div class="detail-item-value">${note.department || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Category</strong>
+                            <div class="category-badge">${note.category || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Uploader</strong>
+                            <div class="detail-item-value" style="cursor: pointer; color: var(--coco-gold);" onclick="navigateToUserProfile(${note.uploader_id})">${note.uploader || 'N/A'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Date</strong>
+                            <div class="detail-item-value">${dateString}</div>
                         </div>
                     </div>
-                </div>
-                <div class="info-sidebar">
-                    <div class="note-card" style="position: sticky; top: 20px;">
-                        <h4 style="margin-bottom: 15px; border-bottom: 1px solid var(--bg-soft-tan); padding-bottom: 10px;">Note Details</h4>
-                        <p><strong>Code:</strong> ${note.code}</p>
-                        <p><strong>Batch:</strong> ${note.batch}</p>
-                        <p><strong>Department:</strong> ${note.dept}</p>
-                        <p><strong>Category:</strong> ${note.cat}</p>
-                        <p><strong>Uploader:</strong> ${note.uploader}</p>
-                        <button class="btn-gold" style="width:100%; margin-top:20px;">
+                    
+                    <div class="action-buttons">
+                        <a href="${note.file_path || ''}" 
+                           target="_blank" 
+                           class="download-btn-details"
+                           data-note-id="${note.note_id}">
                             <i class="ri-download-cloud-2-line"></i> Download PDF
-                        </button>
+                        </a>
+
+                        <div class="upvote-section">
+                            <button class="btn-upvote-details ${activeClass}" data-note-id="${note.note_id}">
+                                <span>🥥</span> <span class="upvote-count">${note.upvotes || 0}</span>
+                            </button>
+                            <div class="stat-pill">
+                                <span>⬇️</span> <span>${note.downloads || 0}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
+
+        // Attach event listeners
+        attachDetailsEventListeners(noteId);
+
+    } catch (err) {
+        console.error('Error:', err);
+        container.innerHTML = '<div class="error-message">Failed to load note details. Please try again.</div>';
     }
 });
+
+function attachDetailsEventListeners(noteId) {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Upvote button
+    const upvoteBtn = document.querySelector('.btn-upvote-details');
+    if (upvoteBtn) {
+        // Handle upvote count click to show modal
+        const countSpan = upvoteBtn.querySelector('.upvote-count');
+        if (countSpan) {
+            countSpan.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showUpvotersModal(noteId, token);
+            });
+        }
+
+        // Handle upvote button click for toggling
+        upvoteBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            try {
+                const response = await fetch('/api/notes/upvote/json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ note_id: noteId })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const countSpan = upvoteBtn.querySelector('.upvote-count');
+                    const currentVal = parseInt(countSpan.innerText);
+
+                    if (data.message.includes('Upvoted')) {
+                        countSpan.innerText = currentVal + 1;
+                        upvoteBtn.classList.add('active-upvote');
+                    } else {
+                        countSpan.innerText = currentVal - 1;
+                        upvoteBtn.classList.remove('active-upvote');
+                    }
+                } else {
+                    alert(data.message || 'Error upvoting note');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Failed to upvote note');
+            }
+        });
+    }
+
+    // Download button
+    const downloadBtn = document.querySelector('.download-btn-details');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const fileLink = downloadBtn.getAttribute('href');
+
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!token || !noteId) return;
+
+            try {
+                const response = await fetch('/api/notes/download/json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ note_id: noteId })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Update the download count in the UI
+                    const downloadCountSpan = document.querySelector('.stat-pill span:last-child');
+                    if (downloadCountSpan) {
+                        const currentDownloads = parseInt(downloadCountSpan.innerText);
+                        downloadCountSpan.innerText = currentDownloads + 1;
+                    }
+
+                    // Open the file in a new tab
+                    if (fileLink) {
+                        window.open(fileLink, '_blank');
+                    }
+                } else {
+                    alert(data.message || 'Error tracking download');
+                }
+            } catch (err) {
+                console.error('Download Error:', err);
+                // Still open the file even if tracking fails
+                if (fileLink) {
+                    window.open(fileLink, '_blank');
+                }
+            }
+        });
+    }
+}
+
+// Functions for upvoters modal
+function closeUpvotersModal() {
+    document.getElementById('upvotersModal').classList.remove('active');
+}
+
+function closeUpvotersModalOnBackdrop(event) {
+    if (event.target.id === 'upvotersModal') {
+        closeUpvotersModal();
+    }
+}
+
+async function showUpvotersModal(noteId, token) {
+    try {
+        const response = await fetch(`/api/notes/${noteId}/upvoters`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            alert('You can only view upvoters for your own notes');
+            return;
+        }
+
+        const upvoters = await response.json();
+        const upvotersList = document.getElementById('upvotersList');
+
+        if (upvoters.length === 0) {
+            upvotersList.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <p>No one has upvoted this note yet.</p>
+                </div>
+            `;
+        } else {
+            upvotersList.innerHTML = upvoters.map(user => `
+                <div class="upvoter-item" onclick="navigateToUserProfile(${user.user_id})">
+                    <div class="upvoter-info">
+                        <div class="upvoter-name">${user.name}</div>
+                        <div class="upvoter-stats">
+                            <span><i class="ri-file-text-line"></i> ${user.notes_uploaded} Notes</span>
+                            <span><i class="ri-download-line"></i> ${user.total_downloads} Downloads</span>
+                            <span><i class="ri-thumb-up-line"></i> ${user.total_upvotes} Upvotes</span>
+                        </div>
+                    </div>
+                    <div class="upvoter-avatar">👤</div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('upvotersModal').classList.add('active');
+    } catch (err) {
+        console.error('Error fetching upvoters:', err);
+        alert('Failed to load upvoters');
+    }
+}
+
+function navigateToUserProfile(userId) {
+    window.location.href = `user-profile.html?id=${userId}`;
+}

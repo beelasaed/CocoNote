@@ -25,7 +25,7 @@ async function fetchNotes() {
 
     // 1. Get the department from the URL
     const params = new URLSearchParams(window.location.search);
-    const dept = params.get('dept'); 
+    const dept = params.get('dept');
 
     // 2. Build the URL. If dept exists, add it to the API call.
     let url = '/api/notes/feed';
@@ -41,11 +41,33 @@ async function fetchNotes() {
 
         if (response.ok) {
             allNotes = data;
-            renderFeed(allNotes);
+            initializeFiltersFromURL();
         } else {
             console.error("Failed to fetch notes:", data.message);
         }
     } catch (err) { console.error("Error:", err); }
+}
+
+function initializeFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const search = params.get('search') || '';
+    const batch = params.get('batch') || '';
+    const category = params.get('category') || '';
+
+    const searchInput = document.getElementById('note-search');
+    const batchFilter = document.getElementById('batch-filter');
+    const catFilter = document.getElementById('cat-filter');
+
+    if (searchInput) searchInput.value = search;
+    if (batchFilter && batch) batchFilter.value = batch;
+    if (catFilter && category) catFilter.value = category;
+
+    // If any filter is active, apply them; otherwise show all notes
+    if (search || batch || category) {
+        applyFilters();
+    } else {
+        renderFeed(allNotes);
+    }
 }
 
 function applyFilters() {
@@ -108,6 +130,8 @@ function renderFeed(notes) {
             allContainer.innerHTML = notes.map(n => {
                 // FIXED 1: Calculate active class here too
                 const activeClass = n.is_upvoted ? 'active-upvote' : '';
+                const savedClass = n.is_saved ? 'active-save' : '';
+                const bookmarkIcon = n.is_saved ? 'ri-bookmark-fill' : 'ri-bookmark-line';
 
                 return `
                 <div class="note-row-card" data-note-id="${n.note_id}">
@@ -134,7 +158,9 @@ function renderFeed(notes) {
                                class="btn-coco-earth small btn-download" 
                                data-note-id="${n.note_id}"
                                style="text-decoration:none;">Download</a>
-                            <button class="btn-coco-save">🔖</button>
+                            <button class="btn-coco-save ${savedClass}" title="${n.is_saved ? 'Unsave note' : 'Save note'}" data-note-id="${n.note_id}">
+                                <i class="${bookmarkIcon}"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -145,6 +171,23 @@ function renderFeed(notes) {
     attachEventListeners();
 }
 function attachEventListeners() {
+    // --- NOTE CARD CLICK LISTENER (Navigate to Details) ---
+    document.querySelectorAll('[data-note-id]').forEach(card => {
+        // Make the entire card clickable, but not if clicking on buttons
+        card.addEventListener('click', (e) => {
+            // Prevent navigation if clicking on a button
+            if (e.target.closest('button') || e.target.closest('a.btn-download')) {
+                return;
+            }
+            const noteId = card.dataset.noteId;
+            if (noteId) {
+                window.location.href = `note-details.html?id=${noteId}`;
+            }
+        });
+        // Add pointer cursor to indicate it's clickable
+        card.style.cursor = 'pointer';
+    });
+
     // --- UPVOTE LISTENER ---
     document.querySelectorAll('.btn-upvote').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -230,6 +273,63 @@ function attachEventListeners() {
                             }
                         }
                     }).catch(console.error);
+            }
+        });
+    });
+
+    // --- SAVE BUTTON LISTENER ---
+    document.querySelectorAll('.btn-coco-save').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation(); // Prevent card click
+            const noteId = btn.dataset.noteId;
+            const token = localStorage.getItem('token');
+            const icon = btn.querySelector('i');
+            const isSaved = btn.classList.contains('active-save');
+
+            if (!noteId || !token) return;
+
+            try {
+                const method = isSaved ? 'DELETE' : 'POST';
+                const res = await fetch(`/api/notes/${noteId}/save`, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    if (isSaved) {
+                        // Unsaved
+                        btn.classList.remove('active-save');
+                        icon.classList.remove('ri-bookmark-fill');
+                        icon.classList.add('ri-bookmark-line');
+                        btn.title = 'Save note';
+                        if (typeof showToast === 'function') {
+                            showToast("Note unsaved");
+                        }
+                    } else {
+                        // Saved
+                        btn.classList.add('active-save');
+                        icon.classList.remove('ri-bookmark-line');
+                        icon.classList.add('ri-bookmark-fill');
+                        btn.title = 'Unsave note';
+                        if (typeof showToast === 'function') {
+                            showToast("Note Saved", "profile.html", "View in profile", 5000);
+                        }
+                    }
+                } else {
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Error saving note', null, null, 3000);
+                    }
+                }
+            } catch (err) {
+                console.error('Save Note Error:', err);
+                if (typeof showToast === 'function') {
+                    showToast('Error saving note', null, null, 3000);
+                }
             }
         });
     });

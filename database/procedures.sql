@@ -26,7 +26,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 1. UPLOAD NEW NOTE
--- Encapsulates the INSERT logic for security.
+
 CREATE OR REPLACE FUNCTION upload_new_note(
     _title VARCHAR,
     _desc TEXT,
@@ -54,14 +54,14 @@ BEGIN
 END;
 $$;
 
--- PROCEDURE: toggle_upvote
--- Logic: If record exists -> DELETE (Undo Upvote). If not -> INSERT (Add Upvote).
+-- toggle_upvote
+
 CREATE OR REPLACE FUNCTION toggle_upvote(p_user_id INT, p_note_id INT)
-RETURNS TEXT -- Returning a string so the frontend knows what happened
+RETURNS TEXT 
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Check if the user is trying to upvote their own note
+   
     IF EXISTS (SELECT 1 FROM note WHERE note_id = p_note_id AND uploader_id = p_user_id) THEN
         RAISE EXCEPTION 'You cannot upvote your own note.';
     END IF;
@@ -75,7 +75,7 @@ BEGIN
     END IF;
 END;
 $$;
--- PROCEDURE: Track Download
+
 CREATE OR REPLACE FUNCTION track_download(p_user_id INT, p_note_id INT)
 RETURNS TEXT
 LANGUAGE plpgsql

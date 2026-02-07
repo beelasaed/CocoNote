@@ -1,12 +1,14 @@
 -- 1. Departments --
 INSERT INTO departments(name) VALUES 
-('CSE'), ('ME'), ('CEE'), ('BTM'), ('EEE');
+('CSE'), ('ME'), ('CEE'), ('BTM'), ('EEE'), ('TVE');
 
 -- 2. Valid Student IDs --
 INSERT INTO valid_student_ids(student_id)
-SELECT generate_series(220041101, 220041130)::text;
+SELECT generate_series(220041101, 220041165)::text;
 
 INSERT INTO valid_student_ids(student_id) VALUES ('190041101') ON CONFLICT DO NOTHING;
+INSERT INTO valid_student_ids(student_id) VALUES ('210041128') ON CONFLICT DO NOTHING;
+INSERT INTO valid_student_ids(student_id) VALUES ('210041129') ON CONFLICT DO NOTHING;
 
 -- 3. Courses --
 INSERT INTO course(name, code, department_id) VALUES
@@ -25,7 +27,7 @@ INSERT INTO course(name, code, department_id) VALUES
 ('Elective 5-II Lab', 'CSE 4599', 1);
 
 -- 4. Categories --
-INSERT INTO category(name) VALUES ('Slides'), ('Lab'), ('Papers'), ('Books');
+INSERT INTO category(name) VALUES ('Lecture Slides'), ('Lab'), ('Past Papers'), ('Books'), ('Manuals');
 
 -- 5. Badges --
 INSERT INTO badge(name, description, points_required) VALUES
@@ -34,8 +36,8 @@ INSERT INTO badge(name, description, points_required) VALUES
 
 -- 6. Users --
 INSERT INTO users(name, student_id, email, password, batch, department_id, total_points) VALUES
-('Anika Tabassum', '220041128', 'anika@iut-dhaka.edu', '$2a$10$dummyhash1', 21, 1, 3820),
-('Samiul Hasan', '220041129', 'samiul@iut-dhaka.edu', '$2a$10$dummyhash2', 19, 2, 2450),
+('Anika Tabassum', '210041128', 'anika@iut-dhaka.edu', '$2a$10$dummyhash1', 21, 1, 3820),
+('Samiul Hasan', '210041129', 'samiul@iut-dhaka.edu', '$2a$10$dummyhash2', 19, 2, 2450),
 ('Fahim IUT', '190041101', 'fahim@iut-dhaka.edu', '$2a$10$dummyhash3', 20, 3, 1980);
 
 -- 7. Sample Notes (UPDATED with description, batch, and department_id) --
@@ -44,3 +46,13 @@ VALUES
 ('Database Normalization Guide', 'Complete guide to 1NF, 2NF, 3NF with examples.', '21', 1, 1, 1, 1, 'uploads/db_normalization.pdf', 1, 100, 50),
 ('Thermodynamics Lab Report', 'Lab report on heat transfer experiment.', '21', 2, 2, 2, 2, 'uploads/thermo_lab.pdf', 1, 80, 30),
 ('Structural Analysis Past Paper', 'Midterm question paper from Spring 2023.', '20', 3, 3, 3, 3, 'uploads/structural_paper.pdf', 1, 120, 70);
+
+-- 8. Sample Saved Notes --
+-- User 1 (Anika) saves notes from User 2 and User 3
+INSERT INTO saved_note(user_id, note_id) VALUES
+(1, 2),
+(1, 3);
+
+-- User 2 (Samiul) saves note from User 1
+INSERT INTO saved_note(user_id, note_id) VALUES
+(2, 1);

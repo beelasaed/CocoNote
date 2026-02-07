@@ -59,7 +59,7 @@ RETURNS TABLE (
     course VARCHAR,
     department VARCHAR,
     category VARCHAR,
-    is_upvoted BOOLEAN --extra column for the button color
+    is_upvoted BOOLEAN 
 ) 
 LANGUAGE plpgsql
 AS $$
@@ -101,7 +101,8 @@ RETURNS TABLE (
     course VARCHAR,
     department VARCHAR,
     category VARCHAR,
-    is_upvoted BOOLEAN
+    is_upvoted BOOLEAN,
+    is_saved BOOLEAN
 ) 
 LANGUAGE plpgsql
 AS $$
@@ -123,7 +124,11 @@ BEGIN
         EXISTS(
             SELECT 1 FROM upvote u 
             WHERE u.note_id = v.note_id AND u.user_id = current_user_id
-        ) AS is_upvoted
+        ) AS is_upvoted,
+        EXISTS(
+            SELECT 1 FROM saved_note sn 
+            WHERE sn.note_id = v.note_id AND sn.user_id = current_user_id
+        ) AS is_saved
     FROM view_feed_details v
     WHERE (_dept_name IS NULL OR v.department = _dept_name)
     ORDER BY v.created_at DESC;

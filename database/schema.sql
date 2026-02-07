@@ -1,4 +1,3 @@
--- 1. Independent Tables (Must come first) --
 
 CREATE TABLE departments (
     department_id SERIAL PRIMARY KEY,
@@ -17,12 +16,12 @@ CREATE TABLE badge (
     points_required INT DEFAULT 0
 );
 
--- Whitelist for valid Student IDs
+
 CREATE TABLE valid_student_ids (
     student_id VARCHAR(20) PRIMARY KEY
 );
 
--- 2. Dependent Tables (Reference the tables above) --
+
 
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
@@ -43,12 +42,11 @@ CREATE TABLE course (
     department_id INT REFERENCES departments(department_id)
 );
 
--- 3. Note Table (UPDATED with new columns) --
 CREATE TABLE note (
     note_id SERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
     
-    -- NEW COLUMNS ADDED HERE
+  
     description TEXT,
     batch VARCHAR(10),
     department_id INT REFERENCES departments(department_id),
@@ -64,7 +62,7 @@ CREATE TABLE note (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- 4. Action Tables --
+
 CREATE TABLE download (
     download_id SERIAL PRIMARY KEY,
     note_id INT REFERENCES note(note_id) ON DELETE CASCADE,
@@ -85,4 +83,12 @@ CREATE TABLE user_badge (
     badge_id INT REFERENCES badge(badge_id) ON DELETE CASCADE,
     earned_at TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (user_id, badge_id)
+);
+
+CREATE TABLE saved_note (
+    saved_note_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    note_id INT NOT NULL REFERENCES note(note_id) ON DELETE CASCADE,
+    saved_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (user_id, note_id)
 );

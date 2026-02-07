@@ -4,11 +4,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CocoNote - My Profile</title>
+    <title>User Profile - CocoNote</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/profile.css">
     <link rel="stylesheet" href="../assets/css/notifications.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.min.css">
+    <style>
+        .back-button-section {
+            margin-bottom: 30px;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            color: var(--coco-earth);
+            background: rgba(215, 174, 108, 0.1);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(215, 174, 108, 0.2);
+            transform: translateX(-4px);
+        }
+
+        .user-info-card.public-profile {
+            border: 2px solid rgba(215, 174, 108, 0.3);
+        }
+
+        .large-avatar {
+            font-size: 4rem;
+        }
+
+        .profile-container.public-view {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .no-edit-button .btn-edit-profile {
+            display: none;
+        }
+    </style>
 </head>
 
 <body class="profile-body">
@@ -42,46 +83,29 @@
                         </div>
                     </div>
                 </div>
-                <a href="profile.html" class="profile-circle active-profile">👤</a>
+                <a href="profile.html" class="profile-circle">👤</a>
                 <button id="logout-btn" class="logout-btn">Logout</button>
             </div>
         </div>
     </nav>
 
-    <main class="profile-container">
-        <section class="user-info-card animate-up" id="userProfileSection">
+    <main class="profile-container public-view">
+        <div class="back-button-section">
+            <button class="back-button" onclick="window.history.back()">
+                <i class="ri-arrow-left-line"></i> Back
+            </button>
+        </div>
+
+        <section class="user-info-card public-profile animate-up no-edit-button" id="userProfileSection">
             <div style="text-align: center; padding: 40px; color: #999;">
                 <div style="font-size: 3rem; margin-bottom: 20px;">⏳</div>
                 <p>Loading profile...</p>
             </div>
         </section>
 
-        <section class="badges-card animate-up" style="animation-delay: 0.1s;">
-            <h3 class="section-subtitle">Achievements</h3>
-            <div class="badges-grid">
-                <div class="badge-item tooltip" data-tip="Uploaded 10+ high-quality notes">
-                    <div class="badge-icon gold-glow">🌟</div>
-                    <span>Top Contributor</span>
-                </div>
-                <div class="badge-item tooltip" data-tip="Joined the community in Batch 21">
-                    <div class="badge-icon">🥥</div>
-                    <span>Early Nut</span>
-                </div>
-                <div class="badge-item tooltip" data-tip="Note reached 100+ downloads">
-                    <div class="badge-icon silver-glow">🔥</div>
-                    <span>Viral Author</span>
-                </div>
-                <div class="badge-item locked" data-tip="Earn 5,000 points to unlock">
-                    <div class="badge-icon">🔒</div>
-                    <span>Coco-Legend</span>
-                </div>
-            </div>
-        </section>
-
         <section class="profile-content-card animate-up" style="animation-delay: 0.2s;">
             <div class="profile-tabs">
-                <button class="tab-btn active" data-tab="my-uploads">My Uploads</button>
-                <button class="tab-btn" data-tab="saved-notes">Saved Notes</button>
+                <button class="tab-btn active" data-tab="my-uploads">Notes Uploaded</button>
             </div>
 
             <div id="tab-content" class="tab-content">
@@ -90,7 +114,7 @@
     </main>
 
     <script src="../screens/notifications.js"></script>
-    <script src="../screens/profile.js"></script>
+    <script src="../screens/user-profile.js"></script>
 </body>
 
 </html>

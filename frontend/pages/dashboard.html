@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="../assets/css/notifications.css">
 </head>
+
 <body class="dashboard-body">
 
     <nav class="upper-nav">
@@ -15,7 +17,7 @@
             <div class="nav-left">
                 <span class="nav-logo">🥥 CocoNote</span>
             </div>
-            
+
             <div class="nav-center">
                 <a href="dashboard.html" class="nav-link active">Dashboard</a>
                 <a href="feed.html" class="nav-link">Feed</a>
@@ -26,11 +28,13 @@
             <div class="nav-right">
                 <button id="theme-toggle" class="icon-btn">🌓</button>
                 <div class="notification-wrapper" style="position: relative;">
-                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot" style="display: none;"></span></button>
+                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot"
+                            style="display: none;"></span></button>
                     <div id="notif-dropdown" class="notification-dropdown">
                         <div class="notif-header">
                             <span>Notifications</span>
-                            <button id="clear-notifs" style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
+                            <button id="clear-notifs"
+                                style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
                         </div>
                         <div id="notif-list" class="notif-list-content">
                             <p class="empty-msg">No new notifications</p>
@@ -51,10 +55,14 @@
                     <span class="search-icon">🔍</span>
                     <input type="text" placeholder="Search by course, title, or keyword...">
                 </div>
-                
+
                 <div class="search-filters">
-                    <select class="filter-pill"><option>Batch</option></select>
-                    <select class="filter-pill"><option>Category</option></select>
+                    <select class="filter-pill">
+                        <option>Batch</option>
+                    </select>
+                    <select class="filter-pill">
+                        <option>Category</option>
+                    </select>
                     <button class="filter-pill-btn">Apply</button>
                 </div>
             </div>
@@ -90,4 +98,5 @@
     <script src="../screens/notifications.js"></script>
     <script src="../screens/dashboard.js"></script>
 </body>
+
 </html>
