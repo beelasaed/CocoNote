@@ -343,7 +343,27 @@ exports.getLeaderboard = async (req, res) => {
     }
 };
 
-// --- 10. DELETE NOTIFICATION ---
+// --- 10. MARK NOTIFICATION AS READ ---
+exports.markNotificationAsRead = async (req, res) => {
+    try {
+        const { notification_id } = req.body;
+        const user_id = req.user.user_id;
+
+        await pool.query(`
+            UPDATE notification 
+            SET is_read = TRUE 
+            WHERE notification_id = $1 AND recipient_user_id = $2
+        `, [notification_id, user_id]);
+
+        res.json({ message: "Notification marked as read" });
+
+    } catch (err) {
+        console.error("Error marking notification as read:", err);
+        res.status(500).json({ message: "Server Error marking notification read" });
+    }
+};
+
+// --- 11. DELETE NOTIFICATION ---
 exports.deleteNotification = async (req, res) => {
     try {
         const { notification_id } = req.body;

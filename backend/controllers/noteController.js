@@ -103,6 +103,37 @@ exports.getUserNotes = async (req, res) => {
     }
 };
 
+// --- 8. GET RECOMMENDATIONS ---
+exports.getRecommendations = async (req, res) => {
+    try {
+        const user_id = req.user.user_id; // From authMiddleware
+
+        // Call the stored function
+        const result = await pool.query('SELECT * FROM get_user_recommendations($1)', [user_id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching recommendations:", err);
+        res.status(500).json({ message: "Server Error fetching recommendations" });
+    }
+};
+
+// --- 9. GET RELATED NOTES (Item-Item) ---
+exports.getRelatedNotes = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+
+        // Call the stored function
+        const result = await pool.query('SELECT * FROM get_related_notes($1)', [note_id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching related notes:", err);
+        res.status(500).json({ message: "Server Error fetching related notes" });
+    }
+};
+
+
 // --- Notes By Specific User (Public Profile) ---
 exports.getNotesByUser = async (req, res) => {
     try {

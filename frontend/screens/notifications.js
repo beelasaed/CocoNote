@@ -75,17 +75,14 @@ async function fetchNotifications() {
         const oldNotifs = JSON.parse(localStorage.getItem('backend_notifications') || '[]');
         const newBadgeNotifs = notifications.filter(n =>
             n.action_type === 'badge_earned' &&
+            !n.is_read && // Only popup for unread badges
             !oldNotifs.some(old => old.notification_id === n.notification_id)
         );
 
         if (newBadgeNotifs.length > 0) {
             newBadgeNotifs.forEach(n => {
-                // Determine badge name from message or default
-                // Since trigger just says "badge_earned", we can try to fetch profile or just show generic
-                // Or we can assume the user just earned it.
-                // NOTE: Trigger in DB is just 'badge_earned'. 
-                // We could just show "New Badge Unlocked!"
-                showBadgePopup();
+                showBadgePopup(n.message);
+                // We no longer mark as read here. The user marks it read by clicking the notification icon.
             });
         }
         // ----------------------------
@@ -98,7 +95,7 @@ async function fetchNotifications() {
 }
 
 // --- BADGE CELEBRATION ---
-function showBadgePopup() {
+function showBadgePopup(message) {
     // 1. Trigger Confetti
     triggerConfetti();
 
@@ -110,7 +107,7 @@ function showBadgePopup() {
             <div class="badge-glow"></div>
             <div style="font-size: 5rem; margin-bottom: 10px;">🏆</div>
             <h2 style="color: var(--earth-brown); margin: 10px 0;">New Badge Unlocked!</h2>
-            <p style="color: #666; margin-bottom: 20px;">You've just earned a new achievement.</p>
+            <p style="color: #666; margin-bottom: 20px;">${message || "You've just earned a new achievement."}</p>
             <button onclick="this.closest('.badge-popup-modal').remove()" style="
                 background: var(--coco-gold); 
                 color: white; 
@@ -415,4 +412,22 @@ function setupLogout() {
             window.location.href = 'login.html';
         });
     });
+}
+
+async function markNotificationRead(notificationId) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        await fetch('/api/auth/notifications/read', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ notification_id: notificationId })
+        });
+    } catch (err) {
+        console.error('Error marking notification as read:', err);
+    }
 }
