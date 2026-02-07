@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const noteController = require('../controllers/noteController');
-const { protect } = require('../middleware/authMiddleware'); 
+const { protect } = require('../middleware/authMiddleware');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
 });
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/pdf') cb(null, true);
@@ -25,12 +25,18 @@ const upload = multer({
 router.get('/options', protect, noteController.getUploadOptions);
 router.get('/feed', protect, noteController.getAllNotes);
 router.get('/my-notes', protect, noteController.getUserNotes);
+router.get('/saved', protect, noteController.getSavedNotes); // MUST be before /:note_id
 router.post('/upload', protect, upload.single('pdfFile'), noteController.uploadNote);
-router.get('/:note_id', protect, noteController.getNoteById);
-router.get('/:note_id/upvoters', protect, noteController.getNoteUpvoters);
 router.post('/upvote', protect, noteController.toggleUpvote);
 router.post('/download', protect, noteController.trackDownload);
 router.post('/upvote/json', protect, noteController.toggleUpvoteAJAX);
 router.post('/download/json', protect, noteController.trackDownloadAJAX);
+
+// Routes with :note_id parameter (must come after specific routes)
+router.get('/:note_id', protect, noteController.getNoteById);
+router.get('/:note_id/upvoters', protect, noteController.getNoteUpvoters);
+router.get('/:note_id/is-saved', protect, noteController.checkIfNoteSaved);
+router.post('/:note_id/save', protect, noteController.saveNote);
+router.delete('/:note_id/save', protect, noteController.unsaveNote);
 
 module.exports = router;

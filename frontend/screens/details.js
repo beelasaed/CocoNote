@@ -35,10 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Format the date
         const createdDate = new Date(note.created_at);
-        const dateString = createdDate.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
+        const dateString = createdDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
 
         // Build the HTML
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function attachDetailsEventListeners(noteId) {
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
         window.location.href = 'login.html';
         return;
@@ -139,7 +139,7 @@ function attachDetailsEventListeners(noteId) {
         // Handle upvote button click for toggling
         upvoteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            
+
             try {
                 const response = await fetch('/api/notes/upvote/json', {
                     method: 'POST',
@@ -207,7 +207,7 @@ function attachDetailsEventListeners(noteId) {
                         const currentDownloads = parseInt(downloadCountSpan.innerText);
                         downloadCountSpan.innerText = currentDownloads + 1;
                     }
-                    
+
                     // Open the file in a new tab
                     if (fileLink) {
                         window.open(fileLink, '_blank');

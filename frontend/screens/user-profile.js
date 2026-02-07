@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('id');
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
         window.location.href = 'login.html';
         return;
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Render user profile
         renderUserProfile(user);
-        
+
         // Load user's notes
         loadUserNotes(userId, token);
 
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function renderUserProfile(user) {
     const userSection = document.getElementById('userProfileSection');
-    
+
     const joinDate = new Date(user.created_at);
     const joinedAt = joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
@@ -93,7 +93,7 @@ async function loadUserNotes(userId, token) {
         if (!response.ok) return;
 
         const allNotes = await response.json();
-        
+
         // Filter to only this user's notes
         const userNotes = allNotes.filter(note => note.uploader_id === parseInt(userId));
 
@@ -107,20 +107,20 @@ async function loadUserNotes(userId, token) {
 
 function renderNotesSection(notes) {
     let tabContent = document.querySelector('#tab-content');
-    
+
     if (!tabContent) {
         const container = document.querySelector('.profile-container');
         const section = document.createElement('section');
         section.className = 'profile-content-card animate-up';
         section.style.animationDelay = '0.2s';
-        
+
         section.innerHTML = `
             <div class="profile-tabs">
                 <button class="tab-btn active" data-tab="my-uploads">Notes Uploaded</button>
             </div>
             <div id="tab-content" class="tab-content"></div>
         `;
-        
+
         container.appendChild(section);
         tabContent = section.querySelector('#tab-content');
     }

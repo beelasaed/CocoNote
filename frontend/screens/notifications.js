@@ -6,10 +6,10 @@ function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000) 
     // A. Show the Visual Popup
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
-    
+
     let content = `<span class="toast-msg">${message}</span>`;
     if (linkUrl) content += `<a href="${linkUrl}" target="_blank" class="toast-btn">${linkText}</a>`;
-    
+
     toast.innerHTML = content;
     document.body.appendChild(toast);
 
@@ -41,7 +41,7 @@ function removeToast(toast) {
     // Safety: Wait 500ms (animation time) then force remove
     setTimeout(() => {
         if (toast.parentNode) toast.remove();
-    }, 500); 
+    }, 500);
 }
 
 // --- 2. NOTIFICATION HISTORY (DROPDOWN) ---
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupThemeToggle();
     setupLogout();
     fetchNotifications(); // Fetch real notifications
-    
+
     // Poll for new notifications every 10 seconds
     setInterval(fetchNotifications, 10000);
 });
@@ -80,7 +80,7 @@ async function fetchNotifications() {
 // Save notifications to localStorage and update badge
 function saveNotificationsToStorage(notifications) {
     localStorage.setItem('backend_notifications', JSON.stringify(notifications));
-    
+
     // Check if there are unread notifications
     const hasUnread = notifications.some(n => !n.is_read);
     localStorage.setItem('coco_has_unread', hasUnread ? 'true' : 'false');
@@ -89,7 +89,7 @@ function saveNotificationsToStorage(notifications) {
 function saveToHistory(message) {
     // Get existing
     const existing = JSON.parse(localStorage.getItem('coco_notifications') || '[]');
-    
+
     // Add new one to top
     const newNotif = {
         msg: message,
@@ -103,7 +103,7 @@ function saveToHistory(message) {
     // Save back
     localStorage.setItem('coco_notifications', JSON.stringify(existing));
     localStorage.setItem('coco_has_unread', 'true'); // Flag for red dot
-    
+
     updateBadge();
     renderHistory(); // If dropdown is open, update it live
 }
@@ -119,7 +119,7 @@ function setupNotificationDropdown() {
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const isOpen = dropdown.classList.contains('active');
-        
+
         if (isOpen) {
             dropdown.classList.remove('active');
         } else {
@@ -172,7 +172,7 @@ async function clearAllNotifications() {
         localStorage.removeItem('backend_notifications');
         localStorage.removeItem('coco_notifications');
         localStorage.removeItem('coco_has_unread');
-        
+
         // Refresh UI
         renderHistory();
         updateBadge();
@@ -187,7 +187,7 @@ async function markAllNotificationsAsRead() {
     if (!token) return;
 
     const notifications = JSON.parse(localStorage.getItem('backend_notifications') || '[]');
-    
+
     for (const notif of notifications) {
         if (!notif.is_read) {
             try {
@@ -218,14 +218,27 @@ function renderHistory() {
 
     // Combine both sources, prioritize backend notifications
     const allNotifs = [
-        ...backendNotifs.map(n => ({
-            msg: `${n.actor_name} ${n.action_type === 'upvote' ? '👍 upvoted' : '📥 downloaded'} your note: "${n.note_title}"`,
-            time: new Date(n.created_at).toLocaleString(),
-            is_read: n.is_read,
-            note_id: n.note_id,
-            notification_id: n.notification_id,
-            action_type: n.action_type
-        })),
+        ...backendNotifs.map(n => {
+            let actionMsg = '📥 downloaded';
+            let icon = '📥';
+
+            if (n.action_type === 'upvote') {
+                actionMsg = '👍 upvoted';
+                icon = '👍';
+            } else if (n.action_type === 'save') {
+                actionMsg = '🔖 saved';
+                icon = '🔖';
+            }
+
+            return {
+                msg: `${n.actor_name} ${actionMsg} your note: "${n.note_title}"`,
+                time: new Date(n.created_at).toLocaleString(),
+                is_read: n.is_read,
+                note_id: n.note_id,
+                notification_id: n.notification_id,
+                action_type: n.action_type
+            };
+        }),
         ...localNotifs
     ];
 

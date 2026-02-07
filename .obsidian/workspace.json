@@ -11,10 +11,12 @@
             "id": "ed83a6ddbf08e78a",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
-              "icon": "lucide-file",
-              "title": "New tab"
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.11.5"
+              },
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.11.5"
             }
           }
         ]
@@ -74,8 +76,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "6bcb80cfee89694e",
@@ -179,6 +180,7 @@
   },
   "active": "ed83a6ddbf08e78a",
   "lastOpenFiles": [
+    "backend/uploads/1769620090894-470425670.pdf",
     "backend/uploads/1769613249101-53461054.pdf",
     "backend/uploads/1769612582871-23903911.pdf",
     "DATABASE_DOCUMENTATION.md",

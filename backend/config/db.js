@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 const path = require('path');
 
-// Point to the .env file in the backend root folder
+
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const pool = new Pool({
@@ -12,7 +12,6 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-// Optional: Log errors if the database connection drops unexpectedly
 pool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
     process.exit(-1);

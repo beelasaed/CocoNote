@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 
-// --- 1. Get Dropdown Options ---
+// --- Dropdown Options ---
 exports.getUploadOptions = async (req, res) => {
     try {
         const departments = await pool.query('SELECT * FROM departments ORDER BY name ASC');
@@ -18,7 +18,7 @@ exports.getUploadOptions = async (req, res) => {
     }
 };
 
-// --- 2. Upload Note (UPDATED: Uses Stored Procedure) ---
+// --- Upload Note ---
 exports.uploadNote = async (req, res) => {
     try {
         if (!req.file) {
@@ -26,19 +26,18 @@ exports.uploadNote = async (req, res) => {
         }
 
         const { title, description, batch, department_id, course_id, category_id } = req.body;
-        const uploader_id = req.user.user_id; 
+        const uploader_id = req.user.user_id;
         const filePath = '/uploads/' + req.file.filename;
 
-        // CALLING THE STORED PROCEDURE
-        // Instead of writing "INSERT INTO...", we call the function we defined in procedures.sql
+
         const result = await pool.query(
             `SELECT * FROM upload_new_note($1, $2, $3, $4, $5, $6, $7, $8)`,
             [title, description, batch, department_id, course_id, category_id, uploader_id, filePath]
         );
 
-        res.status(201).json({ 
-            message: "Note uploaded successfully!", 
-            note: result.rows[0] 
+        res.status(201).json({
+            message: "Note uploaded successfully!",
+            note: result.rows[0]
         });
 
     } catch (err) {
@@ -47,16 +46,16 @@ exports.uploadNote = async (req, res) => {
     }
 };
 
-// --- 3. Get All Notes for Feed (UPDATED: Uses View) ---
+// --- All Notes for Feed  ---
 exports.getAllNotes = async (req, res) => {
     try {
         const user_id = req.user.user_id;
-        const { dept } = req.query; // Get ?dept= from the URL
+        const { dept } = req.query;
 
-        // We use 'null' if 'All' is selected to show everything
+
         const departmentFilter = (dept && dept !== 'All') ? dept : null;
 
-        // Clean call to our new database function
+
         const query = `SELECT * FROM get_filtered_feed($1, $2)`;
         const result = await pool.query(query, [user_id, departmentFilter]);
 
@@ -67,12 +66,12 @@ exports.getAllNotes = async (req, res) => {
     }
 };
 
-// --- 3b. Get User's Own Notes ---
+// --- Own Notes ---
 exports.getUserNotes = async (req, res) => {
     try {
         const user_id = req.user.user_id;
 
-        // Fetch the user's uploaded notes with all details
+
         const result = await pool.query(`
             SELECT 
                 n.note_id,
@@ -104,7 +103,7 @@ exports.getUserNotes = async (req, res) => {
     }
 };
 
-// --- 3c. Get Note By ID ---
+// --- Get Note By ID ---
 exports.getNoteById = async (req, res) => {
     try {
         const { note_id } = req.params;
@@ -150,7 +149,7 @@ exports.getNoteById = async (req, res) => {
     }
 };
 
-// --- 4. Toggle Upvote ---
+// --- Toggle Upvote ---
 exports.toggleUpvote = async (req, res) => {
     try {
         const { note_id } = req.body;
@@ -171,7 +170,7 @@ exports.toggleUpvote = async (req, res) => {
 
         // Safe to toggle
         const result = await pool.query(`SELECT toggle_upvote($1, $2) AS action`, [user_id, note_id]);
-            res.json({ message: result.rows[0].action }); //"ADDED" or "REMOVED"
+        res.json({ message: result.rows[0].action }); //"ADDED" or "REMOVED"
 
 
     } catch (err) {
@@ -179,7 +178,7 @@ exports.toggleUpvote = async (req, res) => {
         res.status(500).json({ message: "Server error while toggling upvote" });
     }
 };
-// --- 5. Track Download ---
+// --- Track Download ---
 exports.trackDownload = async (req, res) => {
     try {
         const { note_id } = req.body;
@@ -189,21 +188,20 @@ exports.trackDownload = async (req, res) => {
 
         // Call the procedure
         const result = await pool.query(
-            `SELECT track_download($1, $2) AS status`, 
+            `SELECT track_download($1, $2) AS status`,
             [user_id, note_id]
         );
 
-        // We don't need to return data, just a 200 OK
+
         res.json({ message: result.rows[0].status });
 
     } catch (err) {
         console.error("Download Track Error:", err);
-        // Don't block the actual download if tracking fails
         res.status(500).json({ message: "Tracking failed" });
     }
 };
 
-// 1. Safe Upvote (Returns JSON for your Toast Notification)
+//  Safe Upvote 
 exports.toggleUpvoteAJAX = async (req, res) => {
     try {
         const { note_id } = req.body;
@@ -237,14 +235,14 @@ exports.toggleUpvoteAJAX = async (req, res) => {
                 `, [note_uploader_id, user_id, note_id]);
             } catch (notifErr) {
                 console.error("Error creating notification:", notifErr);
-                // Don't block the upvote if notification fails
+
             }
         }
-        
-        // Return clear JSON for your frontend
-        return res.json({ 
-            success: true, 
-            message: action === 'ADDED' ? "Upvoted successfully!" : "Upvote removed." 
+
+
+        return res.json({
+            success: true,
+            message: action === 'ADDED' ? "Upvoted successfully!" : "Upvote removed."
         });
 
     } catch (err) {
@@ -253,11 +251,11 @@ exports.toggleUpvoteAJAX = async (req, res) => {
     }
 };
 
-// 2. Safe Download Tracking (Returns JSON so you can show Toast before downloading)
+// Safe Download Tracking 
 exports.trackDownloadAJAX = async (req, res) => {
     try {
         const { note_id } = req.body;
-        const user_id = req.user.user_id; 
+        const user_id = req.user.user_id;
 
         if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
 
@@ -271,7 +269,7 @@ exports.trackDownloadAJAX = async (req, res) => {
 
         // Track the download
         const result = await pool.query(
-            `SELECT track_download($1, $2) AS status`, 
+            `SELECT track_download($1, $2) AS status`,
             [user_id, note_id]
         );
 
@@ -284,7 +282,6 @@ exports.trackDownloadAJAX = async (req, res) => {
                 `, [note_uploader_id, user_id, note_id]);
             } catch (notifErr) {
                 console.error("Error creating notification:", notifErr);
-                // Don't block the download if notification fails
             }
         }
 
@@ -296,7 +293,7 @@ exports.trackDownloadAJAX = async (req, res) => {
     }
 };
 
-// --- 6. GET UPVOTERS OF A NOTE ---
+//GET UPVOTERS OF A NOTE
 exports.getNoteUpvoters = async (req, res) => {
     try {
         const { note_id } = req.params;
@@ -340,5 +337,142 @@ exports.getNoteUpvoters = async (req, res) => {
     } catch (err) {
         console.error("Error fetching upvoters:", err);
         res.status(500).json({ message: "Server Error fetching upvoters" });
+    }
+};
+
+// --- SAVE NOTE ---
+exports.saveNote = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        const user_id = req.user.user_id;
+
+        if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
+
+        // Check if note exists
+        const noteCheck = await pool.query('SELECT uploader_id FROM note WHERE note_id = $1', [note_id]);
+        if (noteCheck.rowCount === 0) {
+            return res.status(404).json({ success: false, message: "Note not found" });
+        }
+
+        const note_uploader_id = noteCheck.rows[0].uploader_id;
+
+        // Check if already saved
+        const alreadySaved = await pool.query(
+            'SELECT * FROM saved_note WHERE user_id = $1 AND note_id = $2',
+            [user_id, note_id]
+        );
+
+        if (alreadySaved.rowCount > 0) {
+            return res.status(400).json({ success: false, message: "Note already saved" });
+        }
+
+        // Save the note
+        await pool.query(
+            'INSERT INTO saved_note (user_id, note_id) VALUES ($1, $2)',
+            [user_id, note_id]
+        );
+
+        // Create notification for uploader (if not saving own note)
+        if (user_id !== note_uploader_id) {
+            try {
+                await pool.query(`
+                    INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+                    VALUES ($1, $2, $3, 'save')
+                `, [note_uploader_id, user_id, note_id]);
+            } catch (notifErr) {
+                console.error("Error creating notification:", notifErr);
+            }
+        }
+
+        res.json({ success: true, message: "Note saved successfully!" });
+
+    } catch (err) {
+        console.error("Save Note Error:", err);
+        res.status(500).json({ success: false, message: "Server error while saving note" });
+    }
+};
+
+// --- UNSAVE NOTE ---
+exports.unsaveNote = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        const user_id = req.user.user_id;
+
+        if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
+
+        const result = await pool.query(
+            'DELETE FROM saved_note WHERE user_id = $1 AND note_id = $2 RETURNING saved_note_id',
+            [user_id, note_id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, message: "Saved note not found" });
+        }
+
+        res.json({ success: true, message: "Note unsaved successfully!" });
+
+    } catch (err) {
+        console.error("Unsave Note Error:", err);
+        res.status(500).json({ success: false, message: "Server error while unsaving note" });
+    }
+};
+
+// --- GET SAVED NOTES ---
+exports.getSavedNotes = async (req, res) => {
+    try {
+        const user_id = req.user.user_id;
+
+        const result = await pool.query(`
+            SELECT 
+                n.note_id,
+                n.title,
+                n.description,
+                n.batch,
+                n.upvotes,
+                n.downloads,
+                n.created_at,
+                c.name AS category,
+                co.code AS course_code,
+                co.name AS course,
+                d.name AS department,
+                u.name AS uploader,
+                n.uploader_id,
+                sn.saved_at
+            FROM saved_note sn
+            INNER JOIN note n ON sn.note_id = n.note_id
+            LEFT JOIN category c ON n.category_id = c.category_id
+            LEFT JOIN course co ON n.course_id = co.course_id
+            LEFT JOIN departments d ON n.department_id = d.department_id
+            LEFT JOIN users u ON n.uploader_id = u.user_id
+            WHERE sn.user_id = $1
+            ORDER BY sn.saved_at DESC
+        `, [user_id]);
+
+        res.json(result.rows);
+
+    } catch (err) {
+        console.error("Error fetching saved notes:", err);
+        res.status(500).json({ message: "Server Error fetching saved notes" });
+    }
+};
+
+// --- CHECK IF NOTE IS SAVED ---
+exports.checkIfNoteSaved = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        const user_id = req.user.user_id;
+
+        if (!note_id) return res.status(400).json({ message: "note_id is required" });
+
+        const result = await pool.query(
+            'SELECT * FROM saved_note WHERE user_id = $1 AND note_id = $2',
+            [user_id, note_id]
+        );
+
+        res.json({ is_saved: result.rowCount > 0 });
+
+    } catch (err) {
+        console.error("Error checking saved status:", err);
+        res.status(500).json({ message: "Server Error checking saved status" });
     }
 };
