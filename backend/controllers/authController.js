@@ -112,6 +112,8 @@ exports.getCurrentUser = async (req, res) => {
                 u.student_id,
                 u.email,
                 u.batch,
+                u.bio,
+                u.profile_picture,
                 u.total_points,
                 u.created_at,
                 d.name AS department
@@ -254,6 +256,8 @@ exports.getPublicUserProfile = async (req, res) => {
                 u.user_id,
                 u.name,
                 u.batch,
+                u.bio,
+                u.profile_picture,
                 u.created_at,
                 u.total_points, -- Added total_points
                 d.name AS department
@@ -406,5 +410,80 @@ exports.deleteAllNotifications = async (req, res) => {
     } catch (err) {
         console.error("Error deleting all notifications:", err);
         res.status(500).json({ message: "Server Error deleting notifications" });
+    }
+};
+
+// --- 12. UPDATE PROFILE ---
+exports.updateProfile = async (req, res) => {
+    try {
+        const user_id = req.user.user_id;
+        const { name, bio } = req.body;
+        let profile_picture = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+        // Build the update query dynamically to avoid overwriting with undefined
+        let query = 'UPDATE users SET ';
+        let params = [];
+        let count = 1;
+
+        if (name) {
+            query += `name = $${count}, `;
+            params.push(name);
+            count++;
+        }
+        if (bio !== undefined) {
+            query += `bio = $${count}, `;
+            params.push(bio);
+            count++;
+        }
+        if (profile_picture) {
+            query += `profile_picture = $${count}, `;
+            params.push(profile_picture);
+            count++;
+        }
+
+        // Remove trailing comma and space
+        query = query.slice(0, -2);
+        query += ` WHERE user_id = $${count} RETURNING *`;
+        params.push(user_id);
+
+        if (params.length === 1) {
+            return res.status(400).json({ message: "No fields to update" });
+        }
+
+        const result = await pool.query(query, params);
+
+        res.json({
+            message: "Profile updated successfully",
+            user: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error("Error updating profile:", err);
+        res.status(500).json({
+            message: "Server Error updating profile",
+            error: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
+    }
+};
+
+// --- 13. DELETE USER ---
+exports.deleteUser = async (req, res) => {
+    try {
+        const user_id = req.user.user_id;
+
+        // Note: Cascading deletes should handle notes, notifications, downloads, upvotes, etc.
+        // as configured in the DB schema.
+        const result = await pool.query('DELETE FROM users WHERE user_id = $1 RETURNING *', [user_id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({ message: "Account deleted successfully" });
+
+    } catch (err) {
+        console.error("Error deleting user:", err);
+        res.status(500).json({ message: "Server Error deleting account" });
     }
 };

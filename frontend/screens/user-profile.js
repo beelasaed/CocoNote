@@ -56,10 +56,13 @@ function renderUserProfile(user) {
 
     userSection.innerHTML = `
         <div class="profile-meta">
-            <div class="large-avatar">👤</div>
+            <div class="large-avatar">
+                ${user.profile_picture ? `<img src="${user.profile_picture}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : '👤'}
+            </div>
             <div class="user-details">
                 <h1>${user.name}</h1>
                 <p><i class="ri-building-line"></i> ${user.department || 'N/A'} • <i class="ri-calendar-line"></i> Batch ${user.batch || 'N/A'}</p>
+                ${user.bio ? `<p class="user-bio" style="margin-top: 10px; color: var(--coco-brown); opacity: 0.9; line-height: 1.5;">${user.bio}</p>` : ''}
                 <div style="font-size: 0.85rem; color: #999; margin-top: 8px; margin-bottom: 20px;">
                     <i class="ri-login-box-line"></i> Joined ${joinedAt}
                 </div>
