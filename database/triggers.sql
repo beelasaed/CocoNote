@@ -208,3 +208,30 @@ CREATE TRIGGER trg_increment_upvote
 AFTER INSERT OR DELETE ON upvote
 FOR EACH ROW
 EXECUTE FUNCTION adjust_note_upvotes();
+
+-- ==========================================
+-- 3. TRIGGER: PLAGIARISM & DUPLICATE DETECTION
+-- ==========================================
+
+CREATE OR REPLACE FUNCTION check_plagiarism()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Check if the same uploader uploaded a note with a >70% similar title in the last 24 hours
+    IF EXISTS (
+        SELECT 1 FROM note
+        WHERE uploader_id = NEW.uploader_id
+          AND similarity(title, NEW.title) > 0.7
+          AND created_at > NOW() - INTERVAL '24 hours'
+          AND note_id != NEW.note_id
+    ) THEN
+        NEW.is_flagged := TRUE;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_plagiarism ON note;
+CREATE TRIGGER trg_check_plagiarism
+BEFORE INSERT ON note
+FOR EACH ROW
+EXECUTE FUNCTION check_plagiarism();

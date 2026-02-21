@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         formData.append('department_id', document.getElementById('department_id').value);
         formData.append('category_id', document.getElementById('category_id').value);
         formData.append('description', document.getElementById('description').value);
-        formData.append('pdfFile', fileInput.files[0]); 
+        formData.append('pdfFile', fileInput.files[0]);
 
         try {
             const response = await fetch('/api/notes/upload', {
@@ -84,22 +84,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await response.json();
 
             if (response.ok) {
+                const successMessage = result.message || "Note uploaded successfully! 🥥";
                 if (typeof showToast === 'function') {
-                    showToast("Note uploaded successfully! 🥥");
+                    showToast(successMessage);
                 } else {
-                    alert("🥥 Success! Your note has been uploaded.");
+                    alert(successMessage);
                 }
 
-                // Wait 1.5 seconds so user sees the popup before leaving
+                // Wait longer if flagged to let users read the warning
+                const delay = result.warning ? 3000 : 1500;
                 setTimeout(() => {
                     window.location.href = 'feed.html';
-                }, 1500);
+                }, delay);
 
             } else {
+                const errorMessage = result.message || "Unknown error";
                 if (typeof showToast === 'function') {
-                    showToast("Upload failed: " + (result.message || "Unknown error"));
+                    showToast("Upload failed: " + errorMessage);
                 } else {
-                    alert("Upload failed: " + (result.message || "Unknown error"));
+                    alert("⚠️ Error: " + errorMessage);
                 }
                 console.log(result);
             }
@@ -108,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (typeof showToast === 'function') {
                 showToast("Could not connect to the server.");
             } else {
-            alert("Could not connect to the server.");
+                alert("Could not connect to the server.");
             }
         }
     });
