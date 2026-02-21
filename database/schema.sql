@@ -94,3 +94,11 @@ CREATE TABLE saved_note (
     saved_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (user_id, note_id)
 );
+CREATE TABLE note_rating (
+    rating_id SERIAL PRIMARY KEY,
+    note_id INT REFERENCES note(note_id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    rated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (note_id, user_id)
+);

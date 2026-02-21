@@ -42,5 +42,6 @@ router.get('/:note_id/upvoters', protect, noteController.getNoteUpvoters);
 router.get('/:note_id/is-saved', protect, noteController.checkIfNoteSaved);
 router.post('/:note_id/save', protect, noteController.saveNote);
 router.delete('/:note_id/save', protect, noteController.unsaveNote);
+router.post('/:note_id/rating', protect, noteController.submitRating);
 
 module.exports = router;

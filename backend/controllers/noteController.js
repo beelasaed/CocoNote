@@ -198,7 +198,10 @@ exports.getNoteById = async (req, res) => {
                 u.name AS uploader,
                 u.user_id AS uploader_id,
                 u.student_id,
-                CASE WHEN EXISTS(SELECT 1 FROM upvote WHERE upvote.note_id = n.note_id AND upvote.user_id = $2) THEN true ELSE false END AS is_upvoted
+                CASE WHEN EXISTS(SELECT 1 FROM upvote WHERE upvote.note_id = n.note_id AND upvote.user_id = $2) THEN true ELSE false END AS is_upvoted,
+                COALESCE((SELECT AVG(rating)::numeric(3,1) FROM note_rating WHERE note_id = n.note_id), 0) AS average_rating,
+                COALESCE((SELECT COUNT(*) FROM note_rating WHERE note_id = n.note_id), 0) AS rating_count,
+                (SELECT rating FROM note_rating WHERE note_id = n.note_id AND user_id = $2) AS user_rating
             FROM note n
             LEFT JOIN category c ON n.category_id = c.category_id
             LEFT JOIN course co ON n.course_id = co.course_id
@@ -599,5 +602,46 @@ exports.getAnalytics = async (req, res) => {
     } catch (err) {
         console.error("Error fetching analytics:", err);
         res.status(500).json({ message: "Server Error fetching analytics" });
+    }
+};
+
+// --- SUBMIT RATING ---
+exports.submitRating = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        const { rating } = req.body;
+        const user_id = req.user.user_id;
+
+        if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+        }
+
+        // Check if note exists
+        const noteCheck = await pool.query('SELECT uploader_id FROM note WHERE note_id = $1', [note_id]);
+        if (noteCheck.rowCount === 0) {
+            return res.status(404).json({ success: false, message: "Note not found" });
+        }
+
+        const note_uploader_id = noteCheck.rows[0].uploader_id;
+
+        // Prevent rating own note
+        if (note_uploader_id === user_id) {
+            return res.status(400).json({ success: false, message: "You cannot rate your own note" });
+        }
+
+        // Upsert rating (update if exists, else insert)
+        await pool.query(`
+            INSERT INTO note_rating (note_id, user_id, rating)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (note_id, user_id) DO UPDATE 
+            SET rating = EXCLUDED.rating, rated_at = NOW()
+        `, [note_id, user_id, rating]);
+
+        res.json({ success: true, message: "Rating submitted successfully!" });
+
+    } catch (err) {
+        console.error("Submit Rating Error:", err);
+        res.status(500).json({ success: false, message: "Server error while submitting rating" });
     }
 };

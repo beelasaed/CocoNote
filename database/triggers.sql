@@ -37,6 +37,19 @@ BEGIN
             _points_change := 10; -- Note downloaded: +10 points
         -- No deduction for deleting download history usually, but let's keep it additive mostly
         END IF;
+    
+    ELSIF TG_TABLE_NAME = 'note_rating' THEN
+        IF TG_OP = 'INSERT' THEN
+            SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
+            _points_change := 5; -- Receive rating: +5 points
+            
+            -- Create notification for uploader
+            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+            VALUES (_user_id, NEW.user_id, NEW.note_id, 'rating');
+        ELSIF TG_OP = 'DELETE' THEN
+            SELECT uploader_id INTO _user_id FROM note WHERE note_id = OLD.note_id;
+            _points_change := -5;
+        END IF;
     END IF;
 
     -- If no user identified (e.g., self-action might be excluded in app logic, but here we just check for null), exit
@@ -208,3 +221,8 @@ CREATE TRIGGER trg_increment_upvote
 AFTER INSERT OR DELETE ON upvote
 FOR EACH ROW
 EXECUTE FUNCTION adjust_note_upvotes();
+-- Apply trigger to note_rating table
+DROP TRIGGER IF EXISTS trg_update_stats_rating ON note_rating;
+CREATE TRIGGER trg_update_stats_rating
+AFTER INSERT OR DELETE ON note_rating
+FOR EACH ROW EXECUTE FUNCTION update_user_stats_and_badges();
