@@ -42,5 +42,8 @@ router.get('/:note_id/upvoters', protect, noteController.getNoteUpvoters);
 router.get('/:note_id/is-saved', protect, noteController.checkIfNoteSaved);
 router.post('/:note_id/save', protect, noteController.saveNote);
 router.delete('/:note_id/save', protect, noteController.unsaveNote);
+router.post('/:note_id/rating', protect, noteController.submitRating);
+router.put('/:note_id', protect, upload.single('pdfFile'), noteController.updateNote);
+router.get('/:note_id/versions', protect, noteController.getVersionHistory);
 
 module.exports = router;

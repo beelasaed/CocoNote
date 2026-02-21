@@ -26,6 +26,10 @@ BEGIN
         IF TG_OP = 'INSERT' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
             _points_change := 5; -- Receive upvote: +5 points
+
+            -- Create notification for uploader
+            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+            VALUES (_user_id, NEW.user_id, NEW.note_id, 'upvote');
         ELSIF TG_OP = 'DELETE' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = OLD.note_id;
             _points_change := -5;
@@ -35,7 +39,24 @@ BEGIN
         IF TG_OP = 'INSERT' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
             _points_change := 10; -- Note downloaded: +10 points
+
+            -- Create notification for uploader
+            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+            VALUES (_user_id, NEW.user_id, NEW.note_id, 'download');
         -- No deduction for deleting download history usually, but let's keep it additive mostly
+        END IF;
+    
+    ELSIF TG_TABLE_NAME = 'note_rating' THEN
+        IF TG_OP = 'INSERT' THEN
+            SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
+            _points_change := 5; -- Receive rating: +5 points
+            
+            -- Create notification for uploader
+            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+            VALUES (_user_id, NEW.user_id, NEW.note_id, 'rating');
+        ELSIF TG_OP = 'DELETE' THEN
+            SELECT uploader_id INTO _user_id FROM note WHERE note_id = OLD.note_id;
+            _points_change := -5;
         END IF;
     END IF;
 
@@ -208,6 +229,21 @@ CREATE TRIGGER trg_increment_upvote
 AFTER INSERT OR DELETE ON upvote
 FOR EACH ROW
 EXECUTE FUNCTION adjust_note_upvotes();
+-- Apply trigger to note_rating table
+DROP TRIGGER IF EXISTS trg_update_stats_rating ON note_rating;
+CREATE TRIGGER trg_update_stats_rating
+AFTER INSERT OR DELETE ON note_rating
+FOR EACH ROW EXECUTE FUNCTION update_user_stats_and_badges();
+
+-- Trigger to notify 'savers' of a new version
+CREATE OR REPLACE FUNCTION notify_note_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.file_path != NEW.file_path THEN
+        INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+        SELECT user_id, NEW.uploader_id, NEW.note_id, 'note_update'
+        FROM saved_note
+        WHERE note_id = NEW.note_id;
 
 -- ==========================================
 -- 3. TRIGGER: PLAGIARISM & DUPLICATE DETECTION
@@ -230,6 +266,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_notify_note_update ON note;
+CREATE TRIGGER trg_notify_note_update
+AFTER UPDATE ON note
+FOR EACH ROW
+EXECUTE FUNCTION notify_note_update();
 DROP TRIGGER IF EXISTS trg_check_plagiarism ON note;
 CREATE TRIGGER trg_check_plagiarism
 BEFORE INSERT ON note

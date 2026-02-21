@@ -4,9 +4,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('noteDetailView');
     const token = localStorage.getItem('token');
 
-    console.log('Note ID from URL:', noteId);
-    console.log('Token exists:', !!token);
-
     if (!token) {
         window.location.href = 'login.html';
         return;
@@ -23,9 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        console.log('Response status:', response.status);
         const data = await response.json();
-        console.log('Response data:', data);
 
         if (!response.ok) {
             throw new Error(data.message || 'Failed to fetch note');
@@ -102,6 +97,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <span>⬇️</span> <span>${note.downloads || 0}</span>
                             </div>
                         </div>
+
+                        <!-- Rating Section -->
+                        <div class="rating-container" style="margin-top: 24px; border-top: 1px solid rgba(215, 174, 108, 0.2); padding-top: 24px; border-bottom: none;">
+                            <div class="rating-header">
+                                <span class="rating-label">Rating</span>
+                                <span class="avg-rating-text">⭐ ${note.average_rating || '0.0'} (${note.rating_count || 0})</span>
+                            </div>
+                            <div class="stars" id="starRating">
+                                <i class="ri-star-line" data-value="1"></i>
+                                <i class="ri-star-line" data-value="2"></i>
+                                <i class="ri-star-line" data-value="3"></i>
+                                <i class="ri-star-line" data-value="4"></i>
+                                <i class="ri-star-line" data-value="5"></i>
+                            </div>
+                            <div id="ratingStatus" style="font-size: 0.8rem; color: #999; margin-top: 4px;">
+                                ${note.user_rating ? 'Your rating: ' + note.user_rating : 'Click to rate'}
+                            </div>
+                        </div>
+
+                        <!-- Edit Button (Owner Only) -->
+                        <div id="owner-actions" style="display: none;">
+                            <button class="edit-btn-sidebar" id="openEditModal">
+                                <i class="ri-edit-line"></i> Edit Note Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Version History (In Sidebar) -->
+                <div class="note-details-card version-history" style="margin-top: 24px; display: none;" id="version-history-section">
+                    <h4 style="border: none; margin-bottom: 0;">📜 Version History</h4>
+                    <div class="version-list" id="version-list">
+                        <!-- Versions injected here -->
                     </div>
                 </div>
             </div>
@@ -116,8 +144,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
 
         // Attach event listeners
-        attachDetailsEventListeners(noteId);
-        fetchRelatedNotes(noteId, token); // Fetch related notes
+        attachDetailsEventListeners(noteId, note.user_rating, note);
+        fetchRelatedNotes(noteId, token);
+        fetchVersionHistory(noteId, token);
+
+        // Check if owner
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.user_id === note.uploader_id) {
+            document.getElementById('owner-actions').style.display = 'block';
+        }
 
     } catch (err) {
         console.error('Error:', err);
@@ -156,7 +191,42 @@ async function fetchRelatedNotes(noteId, token) {
     }
 }
 
-function attachDetailsEventListeners(noteId) {
+async function fetchVersionHistory(noteId, token) {
+    try {
+        const response = await fetch(`/api/notes/${noteId}/versions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (response.ok && data.success && data.versions.length > 0) {
+            const section = document.getElementById('version-history-section');
+            const list = document.getElementById('version-list');
+
+            section.style.display = 'block';
+            list.innerHTML = data.versions.map(v => {
+                const date = new Date(v.created_at).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
+                });
+                return `
+                    <div class="version-item">
+                        <div class="version-info">
+                            <span class="version-num">Version ${v.version_number}</span>
+                            <span class="version-date">${date}</span>
+                            ${v.changes_description ? `<div class="version-desc">${v.changes_description}</div>` : ''}
+                        </div>
+                        <a href="${v.file_path}" target="_blank" style="color: var(--coco-gold); font-size: 1.2rem;">
+                            <i class="ri-file-download-line"></i>
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (err) {
+        console.error("Error fetching version history:", err);
+    }
+}
+
+function attachDetailsEventListeners(noteId, initialUserRating, noteData) {
     const token = localStorage.getItem('token');
 
     if (!token) {
@@ -164,10 +234,76 @@ function attachDetailsEventListeners(noteId) {
         return;
     }
 
+    // Initialize Stars
+    const starContainer = document.getElementById('starRating');
+    const stars = starContainer?.querySelectorAll('i');
+
+    if (stars) {
+        const updateStars = (rating) => {
+            stars.forEach(s => {
+                const val = parseInt(s.getAttribute('data-value'));
+                if (val <= rating) {
+                    s.classList.remove('ri-star-line');
+                    s.classList.add('ri-star-fill', 'active');
+                } else {
+                    s.classList.remove('ri-star-fill', 'active');
+                    s.classList.add('ri-star-line');
+                }
+            });
+        };
+
+        if (initialUserRating) {
+            updateStars(initialUserRating);
+        }
+
+        stars.forEach(star => {
+            star.addEventListener('click', async () => {
+                const rating = parseInt(star.getAttribute('data-value'));
+
+                try {
+                    const response = await fetch(`/api/notes/${noteId}/rating`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ rating })
+                    });
+
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        updateStars(rating);
+                        const status = document.getElementById('ratingStatus');
+                        if (status) status.innerText = `Your rating: ${rating}`;
+                    } else {
+                        alert(data.message || 'Error submitting rating');
+                    }
+                } catch (err) {
+                    console.error('Rating Error:', err);
+                    alert('Failed to submit rating');
+                }
+            });
+
+            star.addEventListener('mouseenter', () => {
+                const val = parseInt(star.getAttribute('data-value'));
+                stars.forEach(s => {
+                    if (parseInt(s.getAttribute('data-value')) <= val) {
+                        s.style.color = 'var(--coco-gold)';
+                    }
+                });
+            });
+
+            star.addEventListener('mouseleave', () => {
+                stars.forEach(s => {
+                    s.style.color = '';
+                });
+            });
+        });
+    }
+
     // Upvote button
     const upvoteBtn = document.querySelector('.btn-upvote-details');
     if (upvoteBtn) {
-        // Handle upvote count click to show modal
         const countSpan = upvoteBtn.querySelector('.upvote-count');
         if (countSpan) {
             countSpan.addEventListener('click', (e) => {
@@ -176,10 +312,8 @@ function attachDetailsEventListeners(noteId) {
             });
         }
 
-        // Handle upvote button click for toggling
         upvoteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-
             try {
                 const response = await fetch('/api/notes/upvote/json', {
                     method: 'POST',
@@ -218,15 +352,7 @@ function attachDetailsEventListeners(noteId) {
     if (downloadBtn) {
         downloadBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const token = localStorage.getItem('token');
             const fileLink = downloadBtn.getAttribute('href');
-
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            if (!token || !noteId) return;
 
             try {
                 const response = await fetch('/api/notes/download/json', {
@@ -241,26 +367,99 @@ function attachDetailsEventListeners(noteId) {
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // Update the download count in the UI
                     const downloadCountSpan = document.querySelector('.stat-pill span:last-child');
                     if (downloadCountSpan) {
                         const currentDownloads = parseInt(downloadCountSpan.innerText);
                         downloadCountSpan.innerText = currentDownloads + 1;
                     }
-
-                    // Open the file in a new tab
-                    if (fileLink) {
-                        window.open(fileLink, '_blank');
-                    }
+                    if (fileLink) window.open(fileLink, '_blank');
                 } else {
                     alert(data.message || 'Error tracking download');
                 }
             } catch (err) {
                 console.error('Download Error:', err);
-                // Still open the file even if tracking fails
-                if (fileLink) {
-                    window.open(fileLink, '_blank');
+                if (fileLink) window.open(fileLink, '_blank');
+            }
+        });
+    }
+
+    // Edit Note Logic
+    const openEditBtn = document.getElementById('openEditModal');
+    const closeEditBtn = document.getElementById('closeEditModal');
+    const editModal = document.getElementById('editNoteModal');
+    const editForm = document.getElementById('edit-note-form');
+    const editPdfInput = document.getElementById('edit-pdfFile');
+    const versionChangesGroup = document.getElementById('versionChangesGroup');
+
+    if (openEditBtn) {
+        openEditBtn.addEventListener('click', () => {
+            document.getElementById('edit-title').value = noteData.title;
+            document.getElementById('edit-description').value = noteData.description || '';
+            editModal.classList.add('active');
+        });
+    }
+
+    if (closeEditBtn) {
+        closeEditBtn.addEventListener('click', () => {
+            editModal.classList.remove('active');
+        });
+    }
+
+    if (editPdfInput) {
+        editPdfInput.addEventListener('change', () => {
+            if (editPdfInput.files.length > 0) {
+                versionChangesGroup.style.display = 'block';
+            } else {
+                versionChangesGroup.style.display = 'none';
+            }
+        });
+    }
+
+    if (editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const saveBtn = editForm.querySelector('.btn-save-edit');
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving...";
+
+            const formData = new FormData();
+            formData.append('title', document.getElementById('edit-title').value);
+            formData.append('description', document.getElementById('edit-description').value);
+            if (editPdfInput.files[0]) {
+                formData.append('pdfFile', editPdfInput.files[0]);
+                formData.append('changes_description', document.getElementById('edit-changes').value);
+            }
+
+            try {
+                const response = await fetch(`/api/notes/${noteId}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                let result;
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error("Server returned non-JSON response:", text);
+                    throw new Error(`Server returned ${response.status} ${response.statusText}. Check console for details.`);
                 }
+
+                if (response.ok && result.success) {
+                    alert(result.message);
+                    window.location.reload();
+                } else {
+                    alert(result.message || "Failed to update note");
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "Save Changes";
+                }
+            } catch (err) {
+                console.error("Update Error:", err);
+                alert("An error occurred while saving changes: " + err.message);
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Save Changes";
             }
         });
     }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +31,7 @@
             color: #f0f0f0;
         }
 
-        [data-theme="dark"] .pdf-section > p {
+        [data-theme="dark"] .pdf-section>p {
             color: #b0b0b0;
         }
 
@@ -122,6 +123,145 @@
             color: #999;
         }
 
+        /* Version History Styles */
+        .version-history {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(215, 174, 108, 0.2);
+        }
+
+        .version-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .version-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(215, 174, 108, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(215, 174, 108, 0.15);
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .version-item:hover {
+            background: rgba(215, 174, 108, 0.1);
+            transform: scale(1.02);
+            border-color: var(--coco-gold);
+        }
+
+        .version-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .version-num {
+            font-weight: 700;
+            color: var(--coco-gold);
+            font-size: 0.85rem;
+        }
+
+        .version-date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .version-desc {
+            font-size: 0.85rem;
+            margin-top: 4px;
+            color: #666;
+            font-style: italic;
+        }
+
+        [data-theme="dark"] .version-item {
+            background: rgba(215, 174, 108, 0.1);
+        }
+
+        [data-theme="dark"] .version-desc {
+            color: #aaa;
+        }
+
+        /* Edit Modal Form Styles */
+        .edit-form-group {
+            margin-bottom: 20px;
+        }
+
+        .edit-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--coco-gold);
+            font-size: 0.9rem;
+        }
+
+        .edit-form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(215, 174, 108, 0.3);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-family: inherit;
+        }
+
+        .edit-form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(215, 174, 108, 0.3);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .btn-save-edit {
+            width: 100%;
+            padding: 14px;
+            background: var(--coco-gold);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-save-edit:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        .edit-btn-sidebar {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--coco-gold);
+            border: 2px solid var(--coco-gold);
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            transition: all 0.2s;
+        }
+
+        .edit-btn-sidebar:hover {
+            background: var(--coco-gold);
+            color: white;
+        }
+
         .details-main {
             max-width: 1100px;
             margin: 0 auto;
@@ -175,7 +315,7 @@
             word-break: break-word;
         }
 
-        .pdf-section > p {
+        .pdf-section>p {
             color: #666;
             margin: 0;
             line-height: 1.8;
@@ -474,7 +614,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .error-message {
@@ -565,10 +707,7 @@
                 grid-template-columns: 1fr;
             }
         }
-    </style>
 
-    <!-- Upvoters Modal -->
-    <style>
         .modal-overlay {
             display: none;
             position: fixed;
@@ -681,7 +820,41 @@
         }
     </style>
 </head>
+
 <body>
+    <!-- Edit Note Modal -->
+    <div id="editNoteModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Note Details</h3>
+                <button class="modal-close" id="closeEditModal">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <form id="edit-note-form">
+                    <div class="edit-form-group">
+                        <label>Title</label>
+                        <input type="text" id="edit-title" class="edit-form-input" required>
+                    </div>
+                    <div class="edit-form-group">
+                        <label>Description</label>
+                        <textarea id="edit-description" class="edit-form-textarea" rows="4"></textarea>
+                    </div>
+                    <div class="edit-form-group">
+                        <label>Update PDF Version (Optional)</label>
+                        <input type="file" id="edit-pdfFile" class="edit-form-input" accept="application/pdf">
+                        <p style="font-size: 0.8rem; color: #888; margin-top: 4px;">Uploading a new PDF will create a
+                            new version in history.</p>
+                    </div>
+                    <div id="versionChangesGroup" class="edit-form-group" style="display: none;">
+                        <label>What changed in this version?</label>
+                        <input type="text" id="edit-changes" class="edit-form-input"
+                            placeholder="e.g. Added section on indexing">
+                    </div>
+                    <button type="submit" class="btn-save-edit">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
     <!-- Upvoters Modal -->
     <div id="upvotersModal" class="modal-overlay" onclick="closeUpvotersModalOnBackdrop(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -697,7 +870,7 @@
             <div class="nav-left">
                 <span class="nav-logo">🥥 CocoNote</span>
             </div>
-            
+
             <div class="nav-center">
                 <a href="dashboard.html" class="nav-link">Dashboard</a>
                 <a href="feed.html" class="nav-link">Feed</a>
@@ -733,7 +906,7 @@
                 <i class="ri-arrow-left-line"></i> Back to Feed
             </a>
         </div>
-        
+
         <div id="noteDetailView" class="detail-container">
             <div class="loading">Loading note details...</div>
         </div>
@@ -742,4 +915,5 @@
     <script src="../screens/notifications.js"></script>
     <script src="../screens/details.js"></script>
 </body>
+
 </html>
