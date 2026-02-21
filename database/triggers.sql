@@ -244,6 +244,10 @@ BEGIN
         SELECT user_id, NEW.uploader_id, NEW.note_id, 'note_update'
         FROM saved_note
         WHERE note_id = NEW.note_id;
+    END IF;          
+    RETURN NEW;      
+END;                 
+$$ LANGUAGE plpgsql;
 
 -- ==========================================
 -- 3. TRIGGER: PLAGIARISM & DUPLICATE DETECTION
