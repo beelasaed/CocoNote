@@ -645,3 +645,97 @@ exports.submitRating = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error while submitting rating" });
     }
 };
+
+// --- UPDATE NOTE & NEW VERSION ---
+exports.updateNote = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        // Use destructuring with defaults or handle nulls explicitly
+        const title = req.body.title || null;
+        const description = req.body.description || null;
+        const batch = req.body.batch || null;
+        const department_id = req.body.department_id || null;
+        const course_id = req.body.course_id || null;
+        const category_id = req.body.category_id || null;
+        const changes_description = req.body.changes_description || null;
+
+        const user_id = req.user.user_id;
+        const file = req.file;
+
+        console.log(`Updating note ${note_id} for user ${user_id}. File present: ${!!file}`);
+
+        if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
+
+        // 1. Verify Ownership
+        const noteCheck = await pool.query('SELECT uploader_id, file_path FROM note WHERE note_id = $1', [note_id]);
+        if (noteCheck.rowCount === 0) {
+            return res.status(404).json({ success: false, message: "Note not found" });
+        }
+        if (noteCheck.rows[0].uploader_id !== user_id) {
+            return res.status(403).json({ success: false, message: "You are not authorized to edit this note" });
+        }
+
+        // 2. Handle New Version if File Uploaded
+        let new_file_path = noteCheck.rows[0].file_path;
+        if (file) {
+            new_file_path = '/uploads/' + file.filename;
+
+            // Get current max version number
+            const versionResult = await pool.query('SELECT COALESCE(MAX(version_number), 0) as max_v FROM note_version WHERE note_id = $1', [note_id]);
+            const next_version = parseInt(versionResult.rows[0].max_v) + 1;
+
+            console.log(`Creating new version ${next_version} for note ${note_id}`);
+
+            // Insert into note_version
+            await pool.query(`
+                INSERT INTO note_version (note_id, version_number, file_path, changes_description)
+                VALUES ($1, $2, $3, $4)
+            `, [note_id, next_version, new_file_path, changes_description || `Updated to version ${next_version}`]);
+        }
+
+        // 3. Update Note Metadata
+        await pool.query(`
+            UPDATE note 
+            SET title = COALESCE($1, title),
+                description = COALESCE($2, description),
+                batch = COALESCE($3, batch),
+                department_id = COALESCE($4, department_id),
+                course_id = COALESCE($5, course_id),
+                category_id = COALESCE($6, category_id),
+                file_path = $7,
+                updated_at = NOW()
+            WHERE note_id = $8
+        `, [title, description, batch, department_id, course_id, category_id, new_file_path, note_id]);
+
+        res.json({
+            success: true,
+            message: file ? "Note version updated successfully! 🚀" : "Note details updated successfully! ✨",
+            note_id
+        });
+
+    } catch (err) {
+        console.error("Update Note Error:", err);
+        res.status(500).json({ success: false, message: "Server error while updating note" });
+    }
+};
+
+// --- GET VERSION HISTORY ---
+exports.getVersionHistory = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
+
+        const result = await pool.query(`
+            SELECT version_id, version_number, file_path, changes_description, created_at
+            FROM note_version
+            WHERE note_id = $1
+            ORDER BY version_number DESC
+        `, [note_id]);
+
+        res.json({ success: true, versions: result.rows });
+
+    } catch (err) {
+        console.error("Get Version History Error:", err);
+        res.status(500).json({ success: false, message: "Server error while fetching version history" });
+    }
+};

@@ -102,3 +102,12 @@ CREATE TABLE note_rating (
     rated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (note_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS note_version (
+    version_id SERIAL PRIMARY KEY,
+    note_id INT REFERENCES note(note_id) ON DELETE CASCADE,
+    version_number INT NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    changes_description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);

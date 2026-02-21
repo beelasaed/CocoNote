@@ -44,13 +44,22 @@ RETURNS TABLE (
 ) 
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    new_note_id INT;
 BEGIN
-    RETURN QUERY
     INSERT INTO note 
     (title, description, batch, department_id, course_id, category_id, uploader_id, file_path) 
     VALUES 
     (_title, _desc, _batch, _dept_id, _course_id, _cat_id, _uploader_id, _file_path)
-    RETURNING note.note_id, note.title, note.created_at;
+    RETURNING note.note_id INTO new_note_id;
+
+    INSERT INTO note_version (note_id, version_number, file_path, changes_description)
+    VALUES (new_note_id, 1, _file_path, 'Initial upload');
+
+    RETURN QUERY
+    SELECT n.note_id, n.title, n.created_at
+    FROM note n
+    WHERE n.note_id = new_note_id;
 END;
 $$;
 

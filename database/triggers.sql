@@ -226,3 +226,23 @@ DROP TRIGGER IF EXISTS trg_update_stats_rating ON note_rating;
 CREATE TRIGGER trg_update_stats_rating
 AFTER INSERT OR DELETE ON note_rating
 FOR EACH ROW EXECUTE FUNCTION update_user_stats_and_badges();
+
+-- Trigger to notify 'savers' of a new version
+CREATE OR REPLACE FUNCTION notify_note_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.file_path != NEW.file_path THEN
+        INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+        SELECT user_id, NEW.uploader_id, NEW.note_id, 'note_update'
+        FROM saved_note
+        WHERE note_id = NEW.note_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_notify_note_update ON note;
+CREATE TRIGGER trg_notify_note_update
+AFTER UPDATE ON note
+FOR EACH ROW
+EXECUTE FUNCTION notify_note_update();
