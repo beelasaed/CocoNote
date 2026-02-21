@@ -52,10 +52,36 @@ document.addEventListener('DOMContentLoaded', () => {
     setupThemeToggle();
     setupLogout();
     fetchNotifications(); // Fetch real notifications
+    setupUserProfile(); // NEW CALL
 
     // Poll for new notifications every 10 seconds
     setInterval(fetchNotifications, 10000);
 });
+
+// Fetch and display user profile info in Nav Bar
+async function setupUserProfile() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+            const profileLink = document.querySelector('.profile-circle');
+            if (profileLink && user.profile_picture) {
+                profileLink.innerHTML = `<img src="${user.profile_picture}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                profileLink.style.padding = '0';
+                profileLink.style.overflow = 'hidden';
+                profileLink.title = user.name;
+            }
+        }
+    } catch (err) {
+        console.error('Error fetching user profile for nav:', err);
+    }
+}
 
 // Fetch notifications from backend
 async function fetchNotifications() {

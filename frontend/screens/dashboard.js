@@ -1,11 +1,81 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Theme and Logout are handled by notifications.js
     setupDashboardSearchAndFilters();
+    fetchAnalytics(); // NEW CALL
 });
 
 let dashboardNotes = [];
 
+async function fetchAnalytics() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/notes/analytics', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            renderAnalytics(data);
+        } else {
+            console.error("Failed to fetch analytics:", data.message);
+        }
+    } catch (err) {
+        console.error("Error fetching analytics:", err);
+    }
+}
+
+function renderAnalytics(data) {
+    const { topContributors, mostDownloaded, deptActivity, courseStats } = data;
+
+    // Top Contributors
+    const tcList = document.getElementById('top-contributors');
+    if (tcList) {
+        tcList.innerHTML = topContributors.length ? topContributors.map(u => `
+            <div class="stat-item" onclick="window.location.href='user-profile.html?id=${u.user_id}'" style="cursor: pointer;">
+                <span class="stat-name">${u.name}</span>
+                <span class="stat-value">${u.note_count} notes</span>
+            </div>
+        `).join('') : '<p>No data available</p>';
+    }
+
+    // Most Downloaded
+    const mdList = document.getElementById('most-downloaded');
+    if (mdList) {
+        mdList.innerHTML = mostDownloaded.length ? mostDownloaded.map(n => `
+            <div class="stat-item" onclick="window.location.href='note-details.html?id=${n.note_id}'" style="cursor: pointer;">
+                <span class="stat-name" title="${n.title}">${n.title}</span>
+                <span class="stat-value">${n.downloads} 📥</span>
+            </div>
+        `).join('') : '<p>No data available</p>';
+    }
+
+    // Dept Activity
+    const daList = document.getElementById('dept-activity');
+    if (daList) {
+        daList.innerHTML = deptActivity.length ? deptActivity.map(d => `
+            <div class="stat-item">
+                <span class="stat-name">${d.name}</span>
+                <span class="stat-value">${d.note_count} notes</span>
+            </div>
+        `).join('') : '<p>No data available</p>';
+    }
+
+    // Course Stats
+    const csList = document.getElementById('course-stats');
+    if (csList) {
+        csList.innerHTML = courseStats.length ? courseStats.map(c => `
+            <div class="stat-item">
+                <span class="stat-name">${c.name}</span>
+                <span class="stat-value">${c.note_count}</span>
+            </div>
+        `).join('') : '<p>No data available</p>';
+    }
+}
+
 async function fetchDashboardNotes() {
+
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'login.html'; return; }
 
@@ -89,7 +159,7 @@ function setupDashboardSearchAndFilters() {
         const filtered = dashboardNotes.filter(note => {
             const matchesSearch = search
                 ? (note.title?.toLowerCase().includes(search) ||
-                   note.course?.toLowerCase().includes(search))
+                    note.course?.toLowerCase().includes(search))
                 : true;
             const matchesBatch = batch ? note.batch == batch : true;
             const matchesCategory = category ? note.category === category : true;
