@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CocoNote - Edit Profile</title>
+    <link rel="stylesheet" href="../assets/css/variable.css">
+    <link rel="stylesheet" href="../assets/css/profile.css">
+    <link rel="stylesheet" href="../assets/css/notifications.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.min.css">
+    <style>
+        .edit-form-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            background: var(--coco-white);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(212, 163, 115, 0.2);
+        }
+
+        .form-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-header h2 {
+            color: var(--coco-brown);
+            margin-bottom: 5px;
+        }
+
+        .form-header p {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--coco-brown);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1.5px solid rgba(212, 163, 115, 0.3);
+            border-radius: 8px;
+            background: var(--coco-cream);
+            color: var(--coco-brown);
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--coco-gold);
+            box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: rgba(0,0,0,0.03);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .avatar-upload-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--coco-cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 2px solid var(--coco-gold);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .btn-upload {
+            padding: 8px 16px;
+            background: var(--coco-cream);
+            border: 1.5px solid var(--coco-gold);
+            border-radius: 6px;
+            color: var(--coco-gold);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-upload:hover {
+            background: var(--coco-gold);
+            color: white;
+        }
+
+        .upload-btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-save {
+            flex: 2;
+            padding: 12px;
+            background: var(--coco-gold);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-save:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #999;
+            border: 1.5px solid #eee;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-cancel:hover {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .danger-zone {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+        }
+
+        .danger-zone h3 {
+            color: #e63946;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .btn-delete {
+            width: 100%;
+            padding: 10px;
+            background: #fff;
+            color: #e63946;
+            border: 1.5px solid #e63946;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-delete:hover {
+            background: #e63946;
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="profile-body">
+
+    <nav class="upper-nav">
+        <div class="nav-content">
+            <div class="nav-left">
+                <a href="dashboard.html" class="nav-logo">🥥 CocoNote</a>
+            </div>
+
+            <div class="nav-center">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="feed.html" class="nav-link">Feed</a>
+                <a href="upload.html" class="nav-link">Upload</a>
+                <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+            </div>
+
+            <div class="nav-right">
+                <button id="theme-toggle" class="icon-btn">🌓</button>
+                <div class="notification-wrapper" style="position: relative;">
+                    <button id="notif-btn" class="icon-btn">🔔<span id="notif-badge" class="dot"
+                            style="display: none;"></span></button>
+                    <div id="notif-dropdown" class="notification-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <button id="clear-notifs"
+                                style="background:none; border:none; color:var(--coco-gold); cursor:pointer; font-size:12px;">Clear</button>
+                        </div>
+                        <div id="notif-list" class="notif-list-content">
+                            <p class="empty-msg">No new notifications</p>
+                        </div>
+                    </div>
+                </div>
+                <a href="profile.html" class="profile-circle active-profile">👤</a>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="profile-container">
+        <div class="edit-form-container animate-up">
+            <div class="form-header">
+                <h2>Edit Profile</h2>
+                <p>Update your personal information</p>
+            </div>
+
+            <form id="editProfileForm">
+                <div class="avatar-upload-wrapper">
+                    <div class="avatar-preview" id="avatarPreview">
+                        👤
+                    </div>
+                    <div class="upload-btn-wrapper">
+                        <button class="btn-upload" type="button">Change Picture</button>
+                        <input type="file" name="profilePicture" id="profilePictureInput" accept="image/*" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" required placeholder="Your full name">
+                </div>
+
+                <div class="form-group">
+                    <label for="bio">Bio</label>
+                    <textarea id="bio" name="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address (Read-only)</label>
+                    <input type="email" id="email" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentId">Student ID (Read-only)</label>
+                    <input type="text" id="studentId" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">Department (Read-only)</label>
+                    <input type="text" id="department" disabled>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+
+            <div class="danger-zone">
+                <h3>Danger Zone</h3>
+                <button id="deleteAccountBtn" class="btn-delete">
+                    <i class="ri-delete-bin-line"></i> Delete Account
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="../screens/notifications.js"></script>
+    <script src="../screens/edit-profile.js"></script>
+</body>
+
+</html>

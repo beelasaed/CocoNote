@@ -31,6 +31,8 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     batch INT,
     department_id INT REFERENCES departments(department_id),
+    bio TEXT,
+    profile_picture VARCHAR(255),
     total_points INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -53,7 +55,7 @@ CREATE TABLE note (
     
     course_id INT REFERENCES course(course_id),
     category_id INT REFERENCES category(category_id),
-    uploader_id INT REFERENCES users(user_id),
+    uploader_id INT REFERENCES users(user_id) ON DELETE CASCADE,
     file_path VARCHAR(255) NOT NULL,
     uploads INT DEFAULT 0,
     downloads INT DEFAULT 0,
