@@ -29,6 +29,7 @@ router.get('/user/:user_id', protect, noteController.getNotesByUser); // Added r
 router.get('/saved', protect, noteController.getSavedNotes); // MUST be before /:note_id
 router.get('/recommendations', protect, noteController.getRecommendations); // New Route
 router.get('/related/:note_id', protect, noteController.getRelatedNotes); // New Route
+router.get('/analytics', protect, noteController.getAnalytics); // New Analytics Route
 router.post('/upload', protect, upload.single('pdfFile'), noteController.uploadNote);
 router.post('/upvote', protect, noteController.toggleUpvote);
 router.post('/download', protect, noteController.trackDownload);

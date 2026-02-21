@@ -545,3 +545,59 @@ exports.checkIfNoteSaved = async (req, res) => {
         res.status(500).json({ message: "Server Error checking saved status" });
     }
 };
+
+// --- GET ANALYTICS ---
+exports.getAnalytics = async (req, res) => {
+    try {
+        const topContributorsQuery = `
+            SELECT u.user_id, u.name, COUNT(n.note_id) as note_count
+            FROM note n
+            JOIN users u ON n.uploader_id = u.user_id
+            GROUP BY u.user_id, u.name
+            ORDER BY note_count DESC
+            LIMIT 3
+        `;
+
+        const mostDownloadedQuery = `
+            SELECT note_id, title, downloads, file_path
+            FROM note
+            WHERE downloads > 0
+            ORDER BY downloads DESC
+            LIMIT 3
+        `;
+
+        const deptActivityQuery = `
+            SELECT d.name, COUNT(n.note_id) as note_count
+            FROM note n
+            JOIN departments d ON n.department_id = d.department_id
+            GROUP BY d.department_id, d.name
+            ORDER BY note_count DESC
+        `;
+
+        const courseStatsQuery = `
+            SELECT c.name, COUNT(n.note_id) as note_count
+            FROM note n
+            JOIN course c ON n.course_id = c.course_id
+            GROUP BY c.course_id, c.name
+            ORDER BY note_count DESC
+            LIMIT 3
+        `;
+
+        const [topContributors, mostDownloaded, deptActivity, courseStats] = await Promise.all([
+            pool.query(topContributorsQuery),
+            pool.query(mostDownloadedQuery),
+            pool.query(deptActivityQuery),
+            pool.query(courseStatsQuery)
+        ]);
+
+        res.json({
+            topContributors: topContributors.rows,
+            mostDownloaded: mostDownloaded.rows,
+            deptActivity: deptActivity.rows,
+            courseStats: courseStats.rows
+        });
+    } catch (err) {
+        console.error("Error fetching analytics:", err);
+        res.status(500).json({ message: "Server Error fetching analytics" });
+    }
+};

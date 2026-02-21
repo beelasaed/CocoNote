@@ -17,12 +17,36 @@ body.login-body {
     box-shadow: var(--shadow-xl);
 }
 
-.brand-title { color: var(--coco-brown); font-size: 2.25rem; text-align: center; margin-bottom: 0.5rem; }
-.welcome-text { color: var(--coco-brown); text-align: center; font-size: 1.5rem; margin: 0; }
-.subtitle { color: var(--text-muted); text-align: center; margin: 0.5rem 0 2rem 0; }
+.brand-title {
+    color: var(--coco-brown);
+    font-size: 2.25rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
 
-.form-group { margin-bottom: 1.5rem; }
-.form-group label { display: block; color: var(--coco-brown); margin-bottom: 0.5rem; font-weight: 500; }
+.welcome-text {
+    color: var(--coco-brown);
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    text-align: center;
+    margin: 0.5rem 0 2rem 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    color: var(--coco-brown);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
 
 .form-group input {
     width: 100%;
@@ -43,7 +67,7 @@ body.login-body {
 .auth-btn {
     width: 100%;
     background-color: var(--coco-gold);
-    color: white;
+    color: rgb(255, 255, 255);
     padding: 0.8rem;
     border: none;
     border-radius: 0.75rem;
@@ -53,8 +77,23 @@ body.login-body {
     transition: transform 0.1s, background 0.2s;
 }
 
-.auth-btn:hover { background-color: var(--coco-gold-hover); transform: scale(1.02); }
-.auth-btn:active { transform: scale(0.98); }
+/* .auth-btn:hover {
+    background-color: var(--coco-gold-hover);
+    transform: scale(1.02);
+} */
 
-.forgot-link { text-align: right; margin-top: -1rem; margin-bottom: 1.5rem; }
-.link-gold { color: var(--coco-gold); text-decoration: none; font-size: 0.875rem; }
+.auth-btn:active {
+    transform: scale(0.98);
+}
+
+.forgot-link {
+    text-align: right;
+    margin-top: -1rem;
+    margin-bottom: 1.5rem;
+}
+
+.link-gold {
+    color: var(--coco-gold);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
