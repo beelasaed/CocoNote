@@ -362,6 +362,9 @@ function renderHistory() {
             } else if (n.action_type === 'save') {
                 actionMsg = '🔖 saved';
                 icon = '🔖';
+            } else if (n.action_type === 'rating') {
+                actionMsg = '⭐ rated';
+                icon = '⭐';
             } else if (n.action_type === 'badge_earned') {
                 // Special case for badges
                 return {

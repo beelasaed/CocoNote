@@ -26,6 +26,10 @@ BEGIN
         IF TG_OP = 'INSERT' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
             _points_change := 5; -- Receive upvote: +5 points
+
+            -- Create notification for uploader
+            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+            VALUES (_user_id, NEW.user_id, NEW.note_id, 'upvote');
         ELSIF TG_OP = 'DELETE' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = OLD.note_id;
             _points_change := -5;
@@ -35,6 +39,10 @@ BEGIN
         IF TG_OP = 'INSERT' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
             _points_change := 10; -- Note downloaded: +10 points
+
+            -- Create notification for uploader
+            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+            VALUES (_user_id, NEW.user_id, NEW.note_id, 'download');
         -- No deduction for deleting download history usually, but let's keep it additive mostly
         END IF;
     
