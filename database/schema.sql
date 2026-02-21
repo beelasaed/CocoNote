@@ -1,4 +1,6 @@
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE TABLE departments (
     department_id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
@@ -57,6 +59,8 @@ CREATE TABLE note (
     category_id INT REFERENCES category(category_id),
     uploader_id INT REFERENCES users(user_id) ON DELETE CASCADE,
     file_path VARCHAR(255) NOT NULL,
+    file_hash VARCHAR(64),
+    is_flagged BOOLEAN DEFAULT FALSE,
     uploads INT DEFAULT 0,
     downloads INT DEFAULT 0,
     upvotes INT DEFAULT 0,

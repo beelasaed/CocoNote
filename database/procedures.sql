@@ -35,29 +35,31 @@ CREATE OR REPLACE FUNCTION upload_new_note(
     _course_id INT,
     _cat_id INT,
     _uploader_id INT,
-    _file_path VARCHAR
-) 
+    _file_path VARCHAR,
+    _file_hash VARCHAR
+)
 RETURNS TABLE (
-    note_id INT, 
-    title VARCHAR, 
+    note_id INT,
+    title VARCHAR,
+    is_flagged BOOLEAN,
     created_at TIMESTAMP
-) 
-LANGUAGE plpgsql
-AS $$
+)
+LANGUAGE plpgsql AS $$
 DECLARE
     new_note_id INT;
 BEGIN
-    INSERT INTO note 
-    (title, description, batch, department_id, course_id, category_id, uploader_id, file_path) 
-    VALUES 
-    (_title, _desc, _batch, _dept_id, _course_id, _cat_id, _uploader_id, _file_path)
+    -- Insert the main note
+    INSERT INTO note (title, description, batch, department_id, course_id, category_id, uploader_id, file_path, file_hash)
+    VALUES (_title, _desc, _batch, _dept_id, _course_id, _cat_id, _uploader_id, _file_path, _file_hash)
     RETURNING note.note_id INTO new_note_id;
 
+    -- Create the version entry
     INSERT INTO note_version (note_id, version_number, file_path, changes_description)
     VALUES (new_note_id, 1, _file_path, 'Initial upload');
 
+    -- Return the result
     RETURN QUERY
-    SELECT n.note_id, n.title, n.created_at
+    SELECT n.note_id, n.title, n.is_flagged, n.created_at
     FROM note n
     WHERE n.note_id = new_note_id;
 END;
