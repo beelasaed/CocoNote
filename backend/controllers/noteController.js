@@ -1,4 +1,7 @@
 const pool = require('../config/db');
+const crypto = require('crypto');
+const fs = require('fs');
+
 
 // --- Dropdown Options ---
 exports.getUploadOptions = async (req, res) => {
@@ -29,15 +32,39 @@ exports.uploadNote = async (req, res) => {
         const uploader_id = req.user.user_id;
         const filePath = '/uploads/' + req.file.filename;
 
+        // Generate SHA-256 hash of the uploaded file
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+
+        // Check if this file hash already exists in the database
+        const duplicateCheck = await pool.query('SELECT uploader_id FROM note WHERE file_hash = $1', [fileHash]);
+
+        if (duplicateCheck.rowCount > 0) {
+            // Delete the duplicate file from the server
+            fs.unlinkSync(req.file.path);
+
+            if (duplicateCheck.rows[0].uploader_id === uploader_id) {
+                return res.status(400).json({ message: 'this note is already uploaded by u' });
+            } else {
+                return res.status(400).json({ message: 'Someone else already uploaded this exact file.' });
+            }
+        }
 
         const result = await pool.query(
-            `SELECT * FROM upload_new_note($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [title, description, batch, department_id, course_id, category_id, uploader_id, filePath]
+            `SELECT * FROM upload_new_note($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [title, description, batch, department_id, course_id, category_id, uploader_id, filePath, fileHash]
         );
 
+        const newNote = result.rows[0];
+        let message = "Note uploaded successfully!";
+        if (newNote.is_flagged) {
+            message = "Note uploaded, but flagged for potential duplication/plagiarism.";
+        }
+
         res.status(201).json({
-            message: "Note uploaded successfully!",
-            note: result.rows[0]
+            message: message,
+            note: newNote,
+            warning: newNote.is_flagged
         });
 
     } catch (err) {

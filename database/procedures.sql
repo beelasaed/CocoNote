@@ -35,11 +35,13 @@ CREATE OR REPLACE FUNCTION upload_new_note(
     _course_id INT,
     _cat_id INT,
     _uploader_id INT,
-    _file_path VARCHAR
+    _file_path VARCHAR,
+    _file_hash VARCHAR
 ) 
 RETURNS TABLE (
     note_id INT, 
     title VARCHAR, 
+    is_flagged BOOLEAN,
     created_at TIMESTAMP
 ) 
 LANGUAGE plpgsql
@@ -47,10 +49,10 @@ AS $$
 BEGIN
     RETURN QUERY
     INSERT INTO note 
-    (title, description, batch, department_id, course_id, category_id, uploader_id, file_path) 
+    (title, description, batch, department_id, course_id, category_id, uploader_id, file_path, file_hash) 
     VALUES 
-    (_title, _desc, _batch, _dept_id, _course_id, _cat_id, _uploader_id, _file_path)
-    RETURNING note.note_id, note.title, note.created_at;
+    (_title, _desc, _batch, _dept_id, _course_id, _cat_id, _uploader_id, _file_path, _file_hash)
+    RETURNING note.note_id, note.title, note.is_flagged, note.created_at;
 END;
 $$;
 
