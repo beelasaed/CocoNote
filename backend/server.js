@@ -18,10 +18,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- 3. ROUTES ---
 const authRoutes = require('./routes/authRoutes');
-const noteRoutes = require('./routes/noteRoutes'); // NEW IMPORT
+const noteRoutes = require('./routes/noteRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/notes', noteRoutes); // NEW ROUTE MOUNT
+app.use('/api/notes', noteRoutes);
+app.use('/api/comments', commentRoutes); // Mount at /api/comments for general routes, some overlap handled by specific paths
 
 // --- 4. CATCH-ALL (SPA Support) ---
 app.get(/(.*)/, (req, res) => {

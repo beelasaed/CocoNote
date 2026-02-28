@@ -36,20 +36,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             day: 'numeric'
         });
 
-        // Build the HTML
+        // Build the HTML for Note Details
         const activeClass = note.is_upvoted ? 'active-upvote' : '';
 
         container.innerHTML = `
-            <div class="pdf-section">
-                <h1>${note.title}</h1>
-                <p>${note.description || 'No description provided'}</p>
-                <div class="pdf-preview" id="pdfPreviewContainer">
-                    ${note.file_path ? `<embed src="${note.file_path}#toolbar=0" type="application/pdf" style="width: 100%; height: 100%; border: none; border-radius: 20px;" />` : `
-                    <i class="ri-file-pdf-fill"></i>
-                    <p>PDF Binary Stream Preview</p>
-                    `}
+            <div class="main-content-column">
+                <div class="pdf-section">
+                    <h1>${note.title}</h1>
+                    <p>${note.description || 'No description provided'}</p>
+                    <div class="pdf-preview" id="pdfPreviewContainer">
+                        ${note.file_path ? `<embed src="${note.file_path}#toolbar=0" type="application/pdf" style="width: 100%; height: 100%; border: none; border-radius: 20px;" />` : `
+                        <i class="ri-file-pdf-fill"></i>
+                        <p>PDF Binary Stream Preview</p>
+                        `}
+                    </div>
+                </div>
+
+                <!-- Discussion Section moved inside the main content column to stay under PDF -->
+                <div class="discussion-section" id="discussionSection">
+                    <div class="discussion-header">
+                        <h2><i class="ri-chat-3-line"></i> Discussion <span id="commentCount">(0)</span></h2>
+                        <div id="highlyDiscussedBadge" class="highly-discussed-badge" style="display: none;">
+                            🔥 Highly Discussed
+                        </div>
+                    </div>
+
+                    <div class="comment-input-container">
+                        <textarea id="mainCommentInput" placeholder="What are your thoughts on this note?"></textarea>
+                        <button class="btn-post-comment" id="btnPostComment">
+                            Post Comment
+                        </button>
+                    </div>
+
+                    <div class="comments-list" id="commentsList">
+                        <!-- Comments injected here -->
+                    </div>
                 </div>
             </div>
+
             <div class="info-sidebar">
                 <div class="note-details-card">
                     <h4>📋 Note Details</h4>
@@ -132,26 +156,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <!-- Versions injected here -->
                     </div>
                 </div>
-            </div>
 
-            <!-- RELATED NOTES SECTION -->
-            <div id="related-notes-section" style="grid-column: 1 / -1; margin-top: 40px; display: none;">
-                <h3 style="color: var(--earth-brown); margin-bottom: 20px;">Students who downloaded this also downloaded...</h3>
-                <div id="related-notes-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
-                    <!-- Related notes injected here -->
-                </div>
+                <!-- Notification Preference (In Sidebar - Injected for Owner) -->
+                <div id="notif-pref-container"></div>
             </div>
         `;
 
         // Attach event listeners
         attachDetailsEventListeners(noteId, note.user_rating, note);
-        fetchRelatedNotes(noteId, token);
         fetchVersionHistory(noteId, token);
 
         // Check if owner
         const user = JSON.parse(localStorage.getItem('user'));
-        if (user && user.user_id === note.uploader_id) {
+        const isOwner = user && user.user_id === note.uploader_id;
+
+        if (isOwner) {
             document.getElementById('owner-actions').style.display = 'block';
+
+            // Inject Notification Toggle for Owner
+            document.getElementById('notif-pref-container').innerHTML = `
+                <div class="note-details-card" style="margin-top: 24px;">
+                    <h4>🔔 Notifications</h4>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                        <span style="font-size: 0.9rem; color: #666;">Notify me of new comments</span>
+                        <label class="switch">
+                            <input type="checkbox" id="notifPreferenceToggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            initNotificationPreference(noteId, token);
+        }
+
+        // --- Initialize Comment System ---
+        initCommentSystem(noteId, token);
+
+        // Show Highly Discussed badge if applicable
+        if (note.is_highly_discussed) {
+            document.getElementById('highlyDiscussedBadge').style.display = 'inline-block';
+        }
+        if (note.comment_count) {
+            document.getElementById('commentCount').innerText = `(${note.comment_count})`;
         }
 
     } catch (err) {
@@ -160,36 +206,285 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-async function fetchRelatedNotes(noteId, token) {
-    try {
-        const response = await fetch(`/api/notes/related/${noteId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const notes = await response.json();
+// --- Notification Preference Logic ---
+async function initNotificationPreference(noteId, token) {
+    const toggle = document.getElementById('notifPreferenceToggle');
+    if (!toggle) return;
 
-        if (response.ok && notes.length > 0) {
-            const section = document.getElementById('related-notes-section');
-            const grid = document.getElementById('related-notes-grid');
+    // Optional: Fetch current preference if you want to be precise, 
+    // but the schema defaults to TRUE.
 
-            if (section && grid) {
-                section.style.display = 'block';
-                grid.innerHTML = notes.map(n => `
-                    <div class="note-details-card" onclick="window.location.href='note-details.html?id=${n.note_id}'" style="cursor: pointer; padding: 20px; transition: transform 0.2s;">
-                        <span style="font-size: 0.8rem; background: var(--coco-cream); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
-                            ${n.common_download_count} common downloads
-                        </span>
-                        <h4 style="margin: 0 0 10px 0; font-size: 1rem; border: none; padding: 0;">${n.title}</h4>
-                        <div style="font-size: 0.85rem; color: #666;">
-                            ${n.course_code || 'General'} • Batch ${n.batch}
+    toggle.addEventListener('change', async () => {
+        try {
+            const response = await fetch(`/api/comments/notes/${noteId}/notification-preference`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ receive_notifications: toggle.checked })
+            });
+            const data = await response.json();
+            if (!response.ok) alert(data.message || "Failed to update preference");
+        } catch (err) {
+            console.error("Notif Pref Error:", err);
+        }
+    });
+}
+
+// --- Comment System Logic ---
+async function initCommentSystem(noteId, token) {
+    const commentList = document.getElementById('commentsList');
+    const mainInput = document.getElementById('mainCommentInput');
+    const postBtn = document.getElementById('btnPostComment');
+
+    if (!postBtn) return;
+
+    const fetchComments = async () => {
+        try {
+            const response = await fetch(`/api/comments/notes/${noteId}/comments`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                renderComments(data.comments);
+            }
+        } catch (err) {
+            console.error("Error fetching comments:", err);
+        }
+    };
+
+    const renderComments = (comments) => {
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+
+        // Group comments by parent
+        const mainComments = comments.filter(c => !c.parent_comment_id);
+        const replies = comments.filter(c => c.parent_comment_id);
+
+        commentList.innerHTML = mainComments.map(c => `
+            <div class="comment-wrapper" id="comment-wrapper-${c.comment_id}">
+                ${renderCommentCard(c, currentUser)}
+                <div class="replies-container">
+                    ${replies.filter(r => r.parent_comment_id === c.comment_id)
+                .map(r => renderCommentCard(r, currentUser, true)).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        // Attach listeners for actions
+        attachCommentListeners(noteId, token, fetchComments);
+    };
+
+    const renderCommentCard = (c, currentUser, isReply = false) => {
+        const timeAgo = formatTimeAgo(new Date(c.created_at));
+        const isOwner = currentUser && currentUser.user_id === c.user_id;
+
+        return `
+            <div class="comment-card ${isReply ? 'reply' : ''}" id="comment-${c.comment_id}">
+                <div class="comment-avatar">👤</div>
+                <div class="comment-content">
+                    <div class="comment-meta">
+                        <span class="comment-user">${c.user_name}</span>
+                        <span class="comment-time">${timeAgo}</span>
+                        ${c.updated_at !== c.created_at ? '<span class="comment-time">(edited)</span>' : ''}
+                    </div>
+                    
+                    <div class="comment-text" id="comment-text-${c.comment_id}">${c.content}</div>
+                    
+                    <!-- Edit container -->
+                    <div class="edit-input-container" id="edit-container-${c.comment_id}">
+                        <textarea id="edit-input-${c.comment_id}">${c.content}</textarea>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="action-link" onclick="cancelEdit(${c.comment_id})">Cancel</button>
+                            <button class="btn-post-comment" style="padding: 6px 15px; font-size: 0.8rem;" onclick="saveEdit(${c.comment_id}, '${noteId}')">Save</button>
                         </div>
                     </div>
-                `).join('');
+
+                    <div class="comment-actions">
+                        <div class="vote-actions">
+                            <button class="vote-btn ${c.user_vote === 1 ? 'active-up' : ''}" onclick="voteComment(${c.comment_id}, 1, '${noteId}')">
+                                <i class="ri-arrow-up-s-line"></i>
+                            </button>
+                            <span class="comment-score">${c.score}</span>
+                            <button class="vote-btn ${c.user_vote === -1 ? 'active-down' : ''}" onclick="voteComment(${c.comment_id}, -1, '${noteId}')">
+                                <i class="ri-arrow-down-s-line"></i>
+                            </button>
+                        </div>
+                        
+                        ${!isReply ? `<a class="action-link" onclick="toggleReplyInput(${c.comment_id})"><i class="ri-reply-line"></i> Reply</a>` : ''}
+                        
+                        ${isOwner ? `
+                            <a class="action-link" onclick="toggleEditInput(${c.comment_id})"><i class="ri-edit-line"></i> Edit</a>
+                            <a class="action-link" onclick="deleteComment(${c.comment_id}, '${noteId}')" style="color: #e74c3c;"><i class="ri-delete-bin-line"></i> Delete</a>
+                        ` : ''}
+                    </div>
+
+                    <!-- Reply input -->
+                    <div class="reply-input-container" id="reply-container-${c.comment_id}">
+                        <textarea id="reply-input-${c.comment_id}" placeholder="Write a reply..."></textarea>
+                        <button class="btn-post-comment" style="padding: 8px 20px; font-size: 0.85rem;" onclick="postReply(${c.comment_id}, '${noteId}')">
+                            Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    postBtn.addEventListener('click', async () => {
+        const content = mainInput.value.trim();
+        if (!content) return;
+
+        console.log("Posting comment to note:", noteId);
+        postBtn.disabled = true;
+        try {
+            const response = await fetch(`/api/comments/notes/${noteId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ content })
+            });
+
+            const result = await response.json();
+            console.log("Post response:", result);
+
+            if (response.ok) {
+                mainInput.value = '';
+                await fetchComments();
+            } else {
+                alert(result.message || "Failed to post comment");
             }
+        } catch (err) {
+            console.error("Post Comment Error:", err);
+            alert("Error: " + err.message + "\nCheck console for details.");
+        } finally {
+            postBtn.disabled = false;
         }
-    } catch (err) {
-        console.error("Error fetching related notes:", err);
+    });
+
+    // Initial fetch
+    await fetchComments();
+}
+
+// --- Global Comment Functions ---
+
+function toggleReplyInput(commentId) {
+    const container = document.getElementById(`reply-container-${commentId}`);
+    container.style.display = container.style.display === 'flex' ? 'none' : 'flex';
+    if (container.style.display === 'flex') {
+        container.querySelector('textarea').focus();
     }
 }
+
+async function postReply(parentCommentId, noteId) {
+    console.log("Posting reply to comment:", parentCommentId, "on note:", noteId);
+    const token = localStorage.getItem('token');
+    const input = document.getElementById(`reply-input-${parentCommentId}`);
+    const content = input.value.trim();
+    if (!content) return;
+
+    try {
+        const response = await fetch(`/api/comments/notes/${noteId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content, parent_comment_id: parentCommentId })
+        });
+
+        const result = await response.json();
+        console.log("Reply response:", result);
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert(result.message || "Failed to post reply");
+        }
+    } catch (err) {
+        console.error("Reply error:", err);
+        alert("Error connecting to server.");
+    }
+}
+
+async function voteComment(commentId, voteType, noteId) {
+    const token = localStorage.getItem('token');
+    try {
+        await fetch(`/api/comments/comments/${commentId}/vote`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ vote_type: voteType })
+        });
+        window.location.reload();
+    } catch (err) {
+        console.error("Vote error:", err);
+    }
+}
+
+function toggleEditInput(commentId) {
+    document.getElementById(`comment-text-${commentId}`).style.display = 'none';
+    document.getElementById(`edit-container-${commentId}`).style.display = 'flex';
+}
+
+function cancelEdit(commentId) {
+    document.getElementById(`comment-text-${commentId}`).style.display = 'block';
+    document.getElementById(`edit-container-${commentId}`).style.display = 'none';
+}
+
+async function saveEdit(commentId, noteId) {
+    const token = localStorage.getItem('token');
+    const content = document.getElementById(`edit-input-${commentId}`).value.trim();
+    if (!content) return;
+
+    try {
+        const response = await fetch(`/api/comments/comments/${commentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+        if (response.ok) window.location.reload();
+    } catch (err) {
+        console.error("Edit error:", err);
+    }
+}
+
+async function deleteComment(commentId, noteId) {
+    if (!confirm("Are you sure you want to delete this comment?")) return;
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`/api/comments/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) window.location.reload();
+    } catch (err) {
+        console.error("Delete error:", err);
+    }
+}
+
+function formatTimeAgo(date) {
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return date.toLocaleDateString();
+}
+
+function attachCommentListeners(noteId, token, fetchComments) {
+    // Handled by inline onclicks for simplicity in this legacy JS environment 
+    // or we could use event delegation. Inline onclicks are easier to inject via innerHTML.
+}
+
+
 
 async function fetchVersionHistory(noteId, token) {
     try {

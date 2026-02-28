@@ -279,4 +279,93 @@ DROP TRIGGER IF EXISTS trg_check_plagiarism ON note;
 CREATE TRIGGER trg_check_plagiarism
 BEFORE INSERT ON note
 FOR EACH ROW
-EXECUTE FUNCTION check_plagiarism();
+-- ==========================================
+-- 4. COMMENT & DISCUSSION TRIGGERS
+-- ==========================================
+
+-- Trigger to update comment count and notify note owner/parent author
+CREATE OR REPLACE FUNCTION handle_comment_change()
+RETURNS TRIGGER AS $$
+DECLARE
+    _note_owner_id INT;
+    _parent_author_id INT;
+    _discussion_threshold INT := 10; -- Threshold for "highly discussed"
+    _current_count INT;
+    _receive_notif BOOLEAN;
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        -- Increment comment count
+        UPDATE note SET comment_count = comment_count + 1 WHERE note_id = NEW.note_id;
+        
+        -- Get current count and check if highly discussed
+        SELECT comment_count INTO _current_count FROM note WHERE note_id = NEW.note_id;
+        IF _current_count >= _discussion_threshold THEN
+            UPDATE note SET is_highly_discussed = TRUE WHERE note_id = NEW.note_id;
+        END IF;
+
+        -- 1. Notify note owner
+        SELECT uploader_id INTO _note_owner_id FROM note WHERE note_id = NEW.note_id;
+        
+        -- Check if owner wants notifications for this note
+        SELECT COALESCE(receive_notifications, TRUE) INTO _receive_notif 
+        FROM note_notification_preference 
+        WHERE user_id = _note_owner_id AND note_id = NEW.note_id;
+
+        IF _note_owner_id IS NOT NULL AND _note_owner_id != NEW.user_id AND _receive_notif THEN
+            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+            VALUES (_note_owner_id, NEW.user_id, NEW.note_id, 'comment');
+        END IF;
+
+        -- 2. Notify parent comment author (if reply)
+        IF NEW.parent_comment_id IS NOT NULL THEN
+            SELECT user_id INTO _parent_author_id FROM comment WHERE comment_id = NEW.parent_comment_id;
+            
+            IF _parent_author_id IS NOT NULL AND _parent_author_id != NEW.user_id THEN
+                -- Separate notification type for replies
+                INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+                VALUES (_parent_author_id, NEW.user_id, NEW.note_id, 'comment_reply');
+            END IF;
+        END IF;
+
+    ELSIF TG_OP = 'DELETE' THEN
+        -- Decrement comment count
+        UPDATE note SET comment_count = GREATEST(0, comment_count - 1) WHERE note_id = OLD.note_id;
+        
+        -- Re-check highly discussed status (optional: could stay true if it once was)
+        SELECT comment_count INTO _current_count FROM note WHERE note_id = OLD.note_id;
+        IF _current_count < _discussion_threshold THEN
+            UPDATE note SET is_highly_discussed = FALSE WHERE note_id = OLD.note_id;
+        END IF;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_comment_change ON comment;
+CREATE TRIGGER trg_comment_change
+AFTER INSERT OR DELETE ON comment
+FOR EACH ROW EXECUTE FUNCTION handle_comment_change();
+
+
+-- Trigger to update comment score on vote change
+CREATE OR REPLACE FUNCTION handle_comment_vote()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE comment SET score = score + NEW.vote_type WHERE comment_id = NEW.comment_id;
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Subtract old vote and add new vote (e.g., changing from -1 to 1 is +2)
+        UPDATE comment SET score = score - OLD.vote_type + NEW.vote_type WHERE comment_id = NEW.comment_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE comment SET score = score - OLD.vote_type WHERE comment_id = OLD.comment_id;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_comment_vote ON comment_vote;
+CREATE TRIGGER trg_comment_vote
+AFTER INSERT OR UPDATE OR DELETE ON comment_vote
+FOR EACH ROW EXECUTE FUNCTION handle_comment_vote();
+
