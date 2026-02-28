@@ -65,7 +65,7 @@ BEGIN
             + n.downloads
             + COALESCE(ui.interaction_count * 15, 0) -- Higher weight for frequently interacted uploaders
             + COALESCE(ROUND(nr.avg_rating * 5), 0)::INT -- Bonus for high ratings
-        ) AS relevance_score
+        )::INT AS relevance_score
     FROM note n
     LEFT JOIN course c ON n.course_id = c.course_id
     LEFT JOIN users u ON n.uploader_id = u.user_id

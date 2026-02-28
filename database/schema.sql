@@ -64,6 +64,8 @@ CREATE TABLE note (
     uploads INT DEFAULT 0,
     downloads INT DEFAULT 0,
     upvotes INT DEFAULT 0,
+    comment_count INT DEFAULT 0,
+    is_highly_discussed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -114,4 +116,30 @@ CREATE TABLE IF NOT EXISTS note_version (
     file_path VARCHAR(255) NOT NULL,
     changes_description TEXT,
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE comment (
+    comment_id SERIAL PRIMARY KEY,
+    note_id INT NOT NULL REFERENCES note(note_id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    parent_comment_id INT REFERENCES comment(comment_id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    score INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE comment_vote (
+    vote_id SERIAL PRIMARY KEY,
+    comment_id INT NOT NULL REFERENCES comment(comment_id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    vote_type INT NOT NULL CHECK (vote_type IN (1, -1)),
+    UNIQUE (comment_id, user_id)
+);
+
+CREATE TABLE note_notification_preference (
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    note_id INT NOT NULL REFERENCES note(note_id) ON DELETE CASCADE,
+    receive_notifications BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (user_id, note_id)
 );
