@@ -39,7 +39,7 @@ async function fetchRecommendations() {
                     // Reusing the Popular Card Style for Recommendations
                     return `
                     <div class="popular-card" data-note-id="${n.note_id}" onclick="window.location.href='note-details.html?id=${n.note_id}'" style="cursor: pointer; border-color: rgba(215, 174, 108, 0.4);">
-                        <span class="category-tag">Match: ${(n.relevance_score || 0) > 80 ? 'High' : 'Medium'}</span>
+                        <span class="category-tag">Match: ${(n.relevance_score || 0) > 80 ? 'High' : (n.relevance_score > 40 ? 'Medium' : 'Low')}</span>
                         <h4 style="margin: 12px 0; font-size: 1.25rem; font-weight: 700;">${n.title}</h4>
                         <p style="font-size: 0.9rem; color: #666; margin-bottom: 12px;">${n.course_code || 'General'} • Batch ${n.batch}</p>
                         <div class="stats-row-aesthetic">
@@ -49,8 +49,14 @@ async function fetchRecommendations() {
                             <div class="stat-pill">
                                 <span class="icon">⬇️</span> <span>${n.downloads || 0}</span>
                             </div>
+                            ${n.average_rating > 0 ? `
+                            <div class="stat-pill">
+                                <span class="icon">⭐</span> <span>${n.average_rating}</span>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
+
                 `}).join('');
             }
         }
