@@ -221,6 +221,7 @@ exports.getNoteById = async (req, res) => {
                 c.name AS category,
                 co.code AS course_code,
                 co.name AS course_name,
+                n.course_id,
                 d.name AS department,
                 u.name AS uploader,
                 u.user_id AS uploader_id,

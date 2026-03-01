@@ -28,6 +28,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const note = data;
 
+        // Fetch course star status
+        let isCourseStarred = false;
+        if (note.course_id) {
+            try {
+                const courseStarResponse = await fetch(`/api/social/status?target_id=${note.course_id}&target_type=course`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const courseStarData = await courseStarResponse.json();
+                isCourseStarred = courseStarData.is_starred;
+            } catch (e) {
+                console.error("Error fetching course star status:", e);
+            }
+        }
+
+        // Fetch uploader star status
+        let isUploaderStarred = false;
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        if (note.uploader_id && currentUser && note.uploader_id !== currentUser.user_id) {
+            try {
+                const uploaderStarResponse = await fetch(`/api/social/status?target_id=${note.uploader_id}&target_type=user`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const uploaderStarData = await uploaderStarResponse.json();
+                isUploaderStarred = uploaderStarData.is_starred;
+            } catch (e) {
+                console.error("Error fetching uploader star status:", e);
+            }
+        }
+
         // Format the date
         const createdDate = new Date(note.created_at);
         const dateString = createdDate.toLocaleDateString('en-US', {
@@ -80,7 +109,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="details-list">
                         <div class="detail-item">
                             <strong>Course</strong>
-                            <div class="detail-item-value">${note.course_name || 'N/A'}</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div class="detail-item-value">${note.course_name || 'N/A'}</div>
+                                ${note.course_id ? `
+                                <button id="star-course-btn" class="star-btn-sm ${isCourseStarred ? 'starred' : ''}" data-id="${note.course_id}">
+                                    <i class="${isCourseStarred ? 'ri-star-fill' : 'ri-star-line'}"></i>
+                                </button>
+                                ` : ''}
+                            </div>
                             <div style="font-size: 0.85rem; color: #999; margin-top: 2px;">${note.course_code || ''}</div>
                         </div>
                         <div class="detail-item">
@@ -97,7 +133,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="detail-item">
                             <strong>Uploader</strong>
-                            <div class="detail-item-value" style="cursor: pointer; color: var(--coco-gold);" onclick="navigateToUserProfile(${note.uploader_id})">${note.uploader || 'N/A'}</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div class="detail-item-value" style="cursor: pointer; color: var(--coco-gold);" onclick="navigateToUserProfile(${note.uploader_id})">${note.uploader || 'N/A'}</div>
+                                ${note.uploader_id && currentUser && note.uploader_id !== currentUser.user_id ? `
+                                <button id="star-uploader-btn" class="star-btn-sm ${isUploaderStarred ? 'starred' : ''}" data-id="${note.uploader_id}">
+                                    <i class="${isUploaderStarred ? 'ri-star-fill' : 'ri-star-line'}"></i>
+                                </button>
+                                ` : ''}
+                            </div>
                         </div>
                         <div class="detail-item">
                             <strong>Date</strong>
@@ -166,6 +209,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         attachDetailsEventListeners(noteId, note.user_rating, note);
         fetchVersionHistory(noteId, token);
 
+        // Add star course button listener
+        const starCourseBtn = document.getElementById('star-course-btn');
+        if (starCourseBtn) {
+            starCourseBtn.addEventListener('click', () => toggleStar(note.course_id, 'course', starCourseBtn));
+        }
+
+        const starUploaderBtn = document.getElementById('star-uploader-btn');
+        if (starUploaderBtn) {
+            starUploaderBtn.addEventListener('click', () => toggleStar(note.uploader_id, 'user', starUploaderBtn));
+        }
+
+        // Add star button styles if not present
+        if (!document.getElementById('star-button-styles')) {
+            const style = document.createElement('style');
+            style.id = 'star-button-styles';
+            style.innerHTML = `
+                .star-btn-sm {
+                    background: none;
+                    border: 1.5px solid var(--coco-gold);
+                    color: var(--coco-gold);
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    padding: 0;
+                }
+                .star-btn-sm:hover {
+                    transform: scale(1.1);
+                    background: rgba(215, 174, 108, 0.1);
+                }
+                .star-btn-sm.starred {
+                    background: var(--coco-gold);
+                    color: white;
+                    box-shadow: 0 2px 8px rgba(215, 174, 108, 0.4);
+                }
+                @keyframes star-pop {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.4); }
+                    100% { transform: scale(1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         // Check if owner
         const user = JSON.parse(localStorage.getItem('user'));
         const isOwner = user && user.user_id === note.uploader_id;
@@ -205,6 +297,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.innerHTML = '<div class="error-message">Failed to load note details. Please try again.</div>';
     }
 });
+
+async function toggleStar(targetId, targetType, btn) {
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch('/api/social/toggle', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ target_id: targetId, target_type: targetType })
+        });
+        const data = await response.json();
+        if (data.success) {
+            const icon = btn.querySelector('i');
+            if (data.action === 'STARRED') {
+                icon.className = 'ri-star-fill';
+                btn.classList.add('starred');
+            } else {
+                icon.className = 'ri-star-line';
+                btn.classList.remove('starred');
+            }
+        }
+    } catch (err) {
+        console.error("Error toggling star:", err);
+    }
+}
 
 // --- Notification Preference Logic ---
 async function initNotificationPreference(noteId, token) {
