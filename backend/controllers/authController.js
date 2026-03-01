@@ -133,7 +133,9 @@ exports.getCurrentUser = async (req, res) => {
             SELECT 
                 COUNT(DISTINCT n.note_id) AS notes_uploaded,
                 COALESCE(SUM(n.downloads), 0) AS total_downloads,
-                COALESCE(SUM(n.upvotes), 0) AS total_upvotes
+                COALESCE(SUM(n.upvotes), 0) AS total_upvotes,
+                (SELECT COUNT(*) FROM stars WHERE target_id = $1 AND target_type = 'user') AS follower_count,
+                (SELECT COUNT(*) FROM stars WHERE user_id = $1 AND target_type = 'user') AS following_count
             FROM note n
             WHERE n.uploader_id = $1
         `, [user_id]);
@@ -154,6 +156,8 @@ exports.getCurrentUser = async (req, res) => {
             notes_uploaded: parseInt(stats.notes_uploaded),
             total_downloads: parseInt(stats.total_downloads),
             total_upvotes: parseInt(stats.total_upvotes),
+            follower_count: parseInt(stats.follower_count),
+            following_count: parseInt(stats.following_count),
             badges: badgesResult.rows
         });
 
@@ -278,7 +282,9 @@ exports.getPublicUserProfile = async (req, res) => {
             SELECT 
                 COUNT(DISTINCT n.note_id) AS notes_uploaded,
                 COALESCE(SUM(n.downloads), 0) AS total_downloads,
-                COALESCE(SUM(n.upvotes), 0) AS total_upvotes
+                COALESCE(SUM(n.upvotes), 0) AS total_upvotes,
+                (SELECT COUNT(*) FROM stars WHERE target_id = $1 AND target_type = 'user') AS follower_count,
+                (SELECT COUNT(*) FROM stars WHERE user_id = $1 AND target_type = 'user') AS following_count
             FROM note n
             WHERE n.uploader_id = $1
         `, [user_id]);
@@ -299,6 +305,8 @@ exports.getPublicUserProfile = async (req, res) => {
             notes_uploaded: parseInt(stats.notes_uploaded),
             total_downloads: parseInt(stats.total_downloads),
             total_upvotes: parseInt(stats.total_upvotes),
+            follower_count: parseInt(stats.follower_count),
+            following_count: parseInt(stats.following_count),
             badges: badgesResult.rows
         });
 

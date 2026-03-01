@@ -93,6 +93,14 @@ function renderUserProfile(user, isStarred) {
                 <span class="stat-label">Coco Points</span>
             </div>
             <div class="stat-box">
+                <span class="stat-num">${formatNumber(user.follower_count || 0)}</span>
+                <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num">${formatNumber(user.following_count || 0)}</span>
+                <span class="stat-label">Following</span>
+            </div>
+            <div class="stat-box">
                 <span class="stat-num">${user.notes_uploaded || 0}</span>
                 <span class="stat-label">Notes Uploaded</span>
             </div>
