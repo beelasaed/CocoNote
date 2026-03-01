@@ -178,7 +178,8 @@ exports.getNotifications = async (req, res) => {
                 u.name AS actor_name,
                 u.student_id,
                 n.title AS note_title,
-                n.note_id
+                n.note_id,
+                notif.actor_user_id
             FROM notification notif
             LEFT JOIN users u ON notif.actor_user_id = u.user_id
             LEFT JOIN note n ON notif.note_id = n.note_id

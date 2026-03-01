@@ -2,7 +2,7 @@
 
 // --- 1. TOAST SYSTEM ---
 
-function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000) {
+function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000, saveToLog = true) {
     // A. Show the Visual Popup
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
@@ -13,7 +13,7 @@ function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000) 
     toast.innerHTML = content;
     document.body.appendChild(toast);
 
-    saveToHistory(message);
+    if (saveToLog) saveToHistory(message);
 
     setTimeout(() => {
         removeToast(toast);
@@ -109,6 +109,20 @@ async function fetchNotifications() {
             newBadgeNotifs.forEach(n => {
                 showBadgePopup(n.message);
                 // We no longer mark as read here. The user marks it read by clicking the notification icon.
+            });
+        }
+        // ----------------------------
+
+        // --- CHECK FOR NEW FOLLOWERS ---
+        const newFollowerNotifs = notifications.filter(n =>
+            n.action_type === 'new_follower' &&
+            !n.is_read &&
+            !oldNotifs.some(old => old.notification_id === n.notification_id)
+        );
+
+        if (newFollowerNotifs.length > 0) {
+            newFollowerNotifs.forEach(n => {
+                showToast(`👤 ${n.actor_name} started following you!`, `user-profile.html?id=${n.actor_user_id}`, "View Profile", 5000, false);
             });
         }
         // ----------------------------
@@ -373,6 +387,10 @@ function renderHistory() {
                 actionMsg = '📚 added';
                 icon = '📚';
                 message = `New note in a starred course: "${n.note_title || 'Unknown Note'}" (by ${n.actor_name})`;
+            } else if (n.action_type === 'new_follower') {
+                actionMsg = '👤 started following';
+                icon = '👤';
+                message = `${n.actor_name} started following you!`;
             } else if (n.action_type === 'badge_earned') {
                 // Special case for badges
                 return {

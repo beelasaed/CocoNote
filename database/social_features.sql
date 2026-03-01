@@ -66,3 +66,21 @@ CREATE TRIGGER trg_notify_followers_milestone
 AFTER INSERT ON user_badge
 FOR EACH ROW
 EXECUTE FUNCTION notify_followers_of_milestone();
+
+-- Trigger 3: Notify user when they get a new follower
+CREATE OR REPLACE FUNCTION notify_user_of_new_follower()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.target_type = 'user' THEN
+        INSERT INTO notification (recipient_user_id, actor_user_id, action_type)
+        VALUES (NEW.target_id, NEW.user_id, 'new_follower');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_notify_new_follower ON stars;
+CREATE TRIGGER trg_notify_new_follower
+AFTER INSERT ON stars
+FOR EACH ROW
+EXECUTE FUNCTION notify_user_of_new_follower();
