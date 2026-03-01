@@ -293,8 +293,13 @@ function renderNotesSection(notes) {
         tabContent.innerHTML = `
             <div class="notes-grid" style="display: grid; gap: 20px;">
                 ${notes.map(note => `
-                    <div class="note-card-item" data-note-id="${note.note_id}" style="cursor: pointer; padding: 18px; background: white; border: 1px solid rgba(215, 174, 108, 0.2); border-radius: 12px; transition: all 0.3s ease; hover: box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                        <h4 style="margin: 0 0 10px 0; color: var(--earth-brown); font-size: 1.1rem;">${note.title}</h4>
+                    <div class="note-card-item" data-note-id="${note.note_id}" style="cursor: pointer; padding: 18px; background: white; border: 1px solid rgba(215, 174, 108, 0.2); border-radius: 12px; transition: all 0.3s ease; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <h4 style="margin: 0 10px 10px 0; color: var(--earth-brown); font-size: 1.1rem; flex: 1;">${note.title}</h4>
+                            <button class="delete-note-btn" data-id="${note.note_id}" title="Delete Note" style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; padding: 5px; border-radius: 5px; transition: all 0.2s; z-index: 2;">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
                         <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">${note.description ? note.description.substring(0, 100) + '...' : 'No description'}</p>
                         <div style="display: flex; gap: 15px; font-size: 0.9rem; color: #999; margin-bottom: 12px;">
                             <span><i class="ri-book-line"></i> ${note.course}</span>
@@ -312,7 +317,8 @@ function renderNotesSection(notes) {
 
         // Add click listeners to notes
         document.querySelectorAll('.note-card-item').forEach(card => {
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-note-btn')) return;
                 const noteId = card.dataset.noteId;
                 window.location.href = `note-details.html?id=${noteId}`;
             });
@@ -539,3 +545,35 @@ function closeSocialModal() {
     const modal = document.getElementById('social-list-modal');
     if (modal) modal.classList.remove('active');
 }
+
+async function deleteNote(noteId) {
+    if (!confirm("Are you sure you want to delete this note? All versions and statistics will be permanently removed.")) return;
+
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`/api/notes/${noteId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert("Note deleted successfully!");
+            location.reload();
+        } else {
+            alert(data.message || "Failed to delete note");
+        }
+    } catch (err) {
+        console.error("Delete note error:", err);
+        alert("An error occurred while deleting the note");
+    }
+}
+
+// Handle delete button via delegation
+document.addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.delete-note-btn');
+    if (deleteBtn) {
+        e.stopPropagation();
+        deleteNote(deleteBtn.dataset.id);
+    }
+});
