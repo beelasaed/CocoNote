@@ -2,7 +2,7 @@
 
 // --- 1. TOAST SYSTEM ---
 
-function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000) {
+function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000, saveToLog = true) {
     // A. Show the Visual Popup
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
@@ -13,7 +13,7 @@ function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000) 
     toast.innerHTML = content;
     document.body.appendChild(toast);
 
-    saveToHistory(message);
+    if (saveToLog) saveToHistory(message);
 
     setTimeout(() => {
         removeToast(toast);
@@ -109,6 +109,20 @@ async function fetchNotifications() {
             newBadgeNotifs.forEach(n => {
                 showBadgePopup(n.message);
                 // We no longer mark as read here. The user marks it read by clicking the notification icon.
+            });
+        }
+        // ----------------------------
+
+        // --- CHECK FOR NEW FOLLOWERS ---
+        const newFollowerNotifs = notifications.filter(n =>
+            n.action_type === 'new_follower' &&
+            !n.is_read &&
+            !oldNotifs.some(old => old.notification_id === n.notification_id)
+        );
+
+        if (newFollowerNotifs.length > 0) {
+            newFollowerNotifs.forEach(n => {
+                showToast(`👤 ${n.actor_name} started following you!`, `user-profile.html?id=${n.actor_user_id}`, "View Profile", 5000, false);
             });
         }
         // ----------------------------
@@ -365,19 +379,43 @@ function renderHistory() {
             } else if (n.action_type === 'rating') {
                 actionMsg = '⭐ rated';
                 icon = '⭐';
+            } else if (n.action_type === 'follow_upload') {
+                actionMsg = '🚀 uploaded';
+                icon = '🚀';
+                message = `${n.actor_name}, who you star, uploaded: "${n.note_title || 'Unknown Note'}"`;
+            } else if (n.action_type === 'course_upload') {
+                actionMsg = '📚 added';
+                icon = '📚';
+                message = `New note in a starred course: "${n.note_title || 'Unknown Note'}" (by ${n.actor_name})`;
+            } else if (n.action_type === 'new_follower') {
+                actionMsg = '👤 started following';
+                icon = '👤';
+                message = `${n.actor_name} started following you!`;
             } else if (n.action_type === 'badge_earned') {
                 // Special case for badges
                 return {
                     msg: `🎉 You earned a new badge! Check your profile.`,
                     time: new Date(n.created_at).toLocaleString(),
                     is_read: n.is_read,
-                    note_id: null, // Badges don't link to a note usually, or link into profile
+                    note_id: null,
+                    notification_id: n.notification_id,
+                    action_type: n.action_type
+                };
+            } else if (n.action_type.startsWith('follower_milestone:')) {
+                const milestone = n.action_type.split(':')[1];
+                return {
+                    msg: `🏆 ${n.actor_name} (who you star) earned: ${milestone}`,
+                    time: new Date(n.created_at).toLocaleString(),
+                    is_read: n.is_read,
+                    note_id: null,
                     notification_id: n.notification_id,
                     action_type: n.action_type
                 };
             }
 
-            message = `${n.actor_name} ${actionMsg} your note: "${n.note_title || 'Unknown Note'}"`;
+            if (!message) {
+                message = `${n.actor_name} ${actionMsg} your note: "${n.note_title || 'Unknown Note'}"`;
+            }
 
             return {
                 msg: message,

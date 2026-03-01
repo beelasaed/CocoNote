@@ -44,6 +44,7 @@ router.post('/:note_id/save', protect, noteController.saveNote);
 router.delete('/:note_id/save', protect, noteController.unsaveNote);
 router.post('/:note_id/rating', protect, noteController.submitRating);
 router.put('/:note_id', protect, upload.single('pdfFile'), noteController.updateNote);
+router.delete('/:note_id', protect, noteController.deleteNote);
 router.get('/:note_id/versions', protect, noteController.getVersionHistory);
 
 module.exports = router;

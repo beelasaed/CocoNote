@@ -72,6 +72,14 @@ function renderUserProfile(user) {
                 <span class="stat-num" style="color: var(--coco-gold);">${formatNumber(user.total_points || 0)}</span>
                 <span class="stat-label">Coco Points</span>
             </div>
+            <div class="stat-box clickable" id="self-followers-btn">
+                <span class="stat-num">${formatNumber(user.follower_count || 0)}</span>
+                <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat-box clickable" id="self-following-btn">
+                <span class="stat-num">${formatNumber(user.following_count || 0)}</span>
+                <span class="stat-label">Following</span>
+            </div>
             <div class="stat-box">
                 <span class="stat-num">${user.notes_uploaded || 0}</span>
                 <span class="stat-label">Notes Uploaded</span>
@@ -86,6 +94,17 @@ function renderUserProfile(user) {
             </div>
         </div>
     `;
+
+    // Add click listeners to followers/following
+    const followersBtn = document.getElementById('self-followers-btn');
+    const followingBtn = document.getElementById('self-following-btn');
+
+    if (followersBtn) {
+        followersBtn.addEventListener('click', () => showSocialList(user.user_id, 'Followers'));
+    }
+    if (followingBtn) {
+        followingBtn.addEventListener('click', () => showSocialList(user.user_id, 'Following'));
+    }
 
     // Add achievements section
     addAchievementsSection(user);
@@ -274,8 +293,13 @@ function renderNotesSection(notes) {
         tabContent.innerHTML = `
             <div class="notes-grid" style="display: grid; gap: 20px;">
                 ${notes.map(note => `
-                    <div class="note-card-item" data-note-id="${note.note_id}" style="cursor: pointer; padding: 18px; background: white; border: 1px solid rgba(215, 174, 108, 0.2); border-radius: 12px; transition: all 0.3s ease; hover: box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-                        <h4 style="margin: 0 0 10px 0; color: var(--earth-brown); font-size: 1.1rem;">${note.title}</h4>
+                    <div class="note-card-item" data-note-id="${note.note_id}" style="cursor: pointer; padding: 18px; background: white; border: 1px solid rgba(215, 174, 108, 0.2); border-radius: 12px; transition: all 0.3s ease; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <h4 style="margin: 0 10px 10px 0; color: var(--earth-brown); font-size: 1.1rem; flex: 1;">${note.title}</h4>
+                            <button class="delete-note-btn" data-id="${note.note_id}" title="Delete Note" style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; padding: 5px; border-radius: 5px; transition: all 0.2s; z-index: 2;">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
                         <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: #666; line-height: 1.5;">${note.description ? note.description.substring(0, 100) + '...' : 'No description'}</p>
                         <div style="display: flex; gap: 15px; font-size: 0.9rem; color: #999; margin-bottom: 12px;">
                             <span><i class="ri-book-line"></i> ${note.course}</span>
@@ -293,7 +317,8 @@ function renderNotesSection(notes) {
 
         // Add click listeners to notes
         document.querySelectorAll('.note-card-item').forEach(card => {
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-note-btn')) return;
                 const noteId = card.dataset.noteId;
                 window.location.href = `note-details.html?id=${noteId}`;
             });
@@ -442,3 +467,113 @@ function addBadgeTooltips() {
 function editProfile() {
     window.location.href = 'edit-profile.html';
 }
+
+function formatNumber(num) {
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return num.toString();
+}
+
+async function showSocialList(userId, title) {
+    const token = localStorage.getItem('token');
+
+    // Create modal if not exists
+    let modal = document.getElementById('social-list-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'social-list-modal';
+        modal.className = 'social-modal';
+        modal.innerHTML = `
+            <div class="social-modal-content">
+                <div class="social-modal-header">
+                    <h3 id="social-modal-title">List</h3>
+                    <button class="social-modal-close" onclick="closeSocialModal()">×</button>
+                </div>
+                <div id="social-list-content" class="social-list-container">
+                    <div class="empty-social-msg">Loading...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeSocialModal();
+        });
+    }
+
+    document.getElementById('social-modal-title').innerText = title;
+    const content = document.getElementById('social-list-content');
+    content.innerHTML = '<div class="empty-social-msg">Loading...</div>';
+
+    modal.classList.add('active');
+
+    try {
+        const endpoint = title === 'Followers' ? `/api/social/followers?user_id=${userId}` : `/api/social/list?user_id=${userId}&type=user`;
+        const response = await fetch(endpoint, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (data.length === 0) {
+            content.innerHTML = `<div class="empty-social-msg">No ${title.toLowerCase()} found</div>`;
+            return;
+        }
+
+        content.innerHTML = data.map(u => `
+            <a href="user-profile.html?id=${u.user_id}" class="social-user-item">
+                <div class="social-user-avatar">
+                   ${u.profile_picture ? `<img src="${u.profile_picture}" alt="avatar">` : u.name[0]}
+                </div>
+                <div class="social-user-info">
+                    <h4>${u.name}</h4>
+                    <p>${u.department || 'No department'} • ${u.student_id || 'Student ID'}</p>
+                </div>
+                <i class="ri-arrow-right-s-line" style="color: #ccc;"></i>
+            </a>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error fetching social list:', err);
+        content.innerHTML = '<div class="empty-social-msg">Error loading list</div>';
+    }
+}
+
+function closeSocialModal() {
+    const modal = document.getElementById('social-list-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function deleteNote(noteId) {
+    if (!confirm("Are you sure you want to delete this note? All versions and statistics will be permanently removed.")) return;
+
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`/api/notes/${noteId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert("Note deleted successfully!");
+            location.reload();
+        } else {
+            alert(data.message || "Failed to delete note");
+        }
+    } catch (err) {
+        console.error("Delete note error:", err);
+        alert("An error occurred while deleting the note");
+    }
+}
+
+// Handle delete button via delegation
+document.addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('.delete-note-btn');
+    if (deleteBtn) {
+        e.stopPropagation();
+        deleteNote(deleteBtn.dataset.id);
+    }
+});

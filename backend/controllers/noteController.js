@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
 
 
 // --- Dropdown Options ---
@@ -221,6 +222,7 @@ exports.getNoteById = async (req, res) => {
                 c.name AS category,
                 co.code AS course_code,
                 co.name AS course_name,
+                n.course_id,
                 d.name AS department,
                 u.name AS uploader,
                 u.user_id AS uploader_id,
@@ -764,5 +766,62 @@ exports.getVersionHistory = async (req, res) => {
     } catch (err) {
         console.error("Get Version History Error:", err);
         res.status(500).json({ success: false, message: "Server error while fetching version history" });
+    }
+};
+
+// --- Delete Note ---
+exports.deleteNote = async (req, res) => {
+    try {
+        const { note_id } = req.params;
+        const user_id = req.user.user_id;
+
+        if (!note_id) return res.status(400).json({ success: false, message: "note_id is required" });
+
+        // 1. Verify Ownership and get File Paths
+        const noteCheck = await pool.query('SELECT uploader_id, file_path FROM note WHERE note_id = $1', [note_id]);
+        if (noteCheck.rowCount === 0) {
+            return res.status(404).json({ success: false, message: "Note not found" });
+        }
+        if (noteCheck.rows[0].uploader_id !== user_id) {
+            return res.status(403).json({ success: false, message: "You are not authorized to delete this note" });
+        }
+
+        const mainFilePath = noteCheck.rows[0].file_path;
+
+        // Get version file paths to delete them too
+        const versions = await pool.query('SELECT file_path FROM note_version WHERE note_id = $1', [note_id]);
+
+        // 2. Delete from DB (Cascades handle related tables)
+        await pool.query('DELETE FROM note WHERE note_id = $1', [note_id]);
+
+        // 3. Delete Physical Files
+        const deleteFile = (fPath) => {
+            if (!fPath) return;
+            // fPath is like '/uploads/filename.pdf'
+            const fullPath = path.join(__dirname, '..', fPath);
+            if (fs.existsSync(fullPath)) {
+                try {
+                    fs.unlinkSync(fullPath);
+                } catch (e) {
+                    console.error(`Failed to delete file ${fullPath}:`, e);
+                }
+            }
+        };
+
+        // Delete main file
+        deleteFile(mainFilePath);
+
+        // Delete version files
+        versions.rows.forEach(v => {
+            if (v.file_path !== mainFilePath) { // Avoid duplicate unlinks
+                deleteFile(v.file_path);
+            }
+        });
+
+        res.json({ success: true, message: "Note and all its versions deleted successfully!" });
+
+    } catch (err) {
+        console.error("Delete Note Error:", err);
+        res.status(500).json({ success: false, message: "Server error while deleting note" });
     }
 };

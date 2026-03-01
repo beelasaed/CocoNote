@@ -31,13 +31,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const user = await response.json();
         console.log('User Profile:', user);
 
+        // Fetch star status
+        let isStarred = false;
+        try {
+            const starResponse = await fetch(`/api/social/status?target_id=${userId}&target_type=user`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const starData = await starResponse.json();
+            isStarred = starData.is_starred;
+        } catch (e) {
+            console.error("Error fetching star status:", e);
+        }
+
         // Render user profile
-        renderUserProfile(user);
+        renderUserProfile(user, isStarred);
 
         // Load user's notes
         loadUserNotes(userId); // Load notes dynamically
 
     } catch (err) {
+
         console.error('Error:', err);
         document.getElementById('userProfileSection').innerHTML = `
             <div style="text-align: center; padding: 40px; color: #c33;">
@@ -48,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function renderUserProfile(user) {
+function renderUserProfile(user, isStarred) {
     const userSection = document.getElementById('userProfileSection');
 
     const joinDate = new Date(user.created_at);
@@ -59,8 +72,13 @@ function renderUserProfile(user) {
             <div class="large-avatar">
                 ${user.profile_picture ? `<img src="${user.profile_picture}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` : '👤'}
             </div>
-            <div class="user-details">
-                <h1>${user.name}</h1>
+            <div class="user-details" style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h1>${user.name}</h1>
+                    <button id="star-user-btn" class="star-btn ${isStarred ? 'starred' : ''}" data-id="${user.user_id}">
+                        <i class="${isStarred ? 'ri-star-fill' : 'ri-star-line'}"></i>
+                    </button>
+                </div>
                 <p><i class="ri-building-line"></i> ${user.department || 'N/A'} • <i class="ri-calendar-line"></i> Batch ${user.batch || 'N/A'}</p>
                 ${user.bio ? `<p class="user-bio" style="margin-top: 10px; color: var(--coco-brown); opacity: 0.9; line-height: 1.5;">${user.bio}</p>` : ''}
                 <div style="font-size: 0.85rem; color: #999; margin-top: 8px; margin-bottom: 20px;">
@@ -73,6 +91,14 @@ function renderUserProfile(user) {
             <div class="stat-box">
                 <span class="stat-num" style="color: var(--coco-gold);">${formatNumber(user.total_points || 0)}</span>
                 <span class="stat-label">Coco Points</span>
+            </div>
+            <div class="stat-box clickable" id="show-followers-btn">
+                <span class="stat-num">${formatNumber(user.follower_count || 0)}</span>
+                <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat-box clickable" id="show-following-btn">
+                <span class="stat-num">${formatNumber(user.following_count || 0)}</span>
+                <span class="stat-label">Following</span>
             </div>
             <div class="stat-box">
                 <span class="stat-num">${user.notes_uploaded || 0}</span>
@@ -89,9 +115,96 @@ function renderUserProfile(user) {
         </div>
     `;
 
+    // Add star button listener
+    const starBtn = document.getElementById('star-user-btn');
+    if (starBtn) {
+        starBtn.addEventListener('click', () => toggleStar(user.user_id, 'user', starBtn));
+    }
+
+    // Modal listeners
+    const followersBtn = document.getElementById('show-followers-btn');
+    const followingBtn = document.getElementById('show-following-btn');
+
+    if (followersBtn) {
+        followersBtn.addEventListener('click', () => showSocialList(user.user_id, 'Followers'));
+    }
+    if (followingBtn) {
+        followingBtn.addEventListener('click', () => showSocialList(user.user_id, 'Following'));
+    }
+
     // Add achievements section
     addAchievementsSection(user);
+
+    // Add star button styles if not present
+    if (!document.getElementById('star-button-styles')) {
+        const style = document.createElement('style');
+        style.id = 'star-button-styles';
+        style.innerHTML = `
+            .star-btn {
+                background: none;
+                border: 2px solid var(--coco-gold);
+                color: var(--coco-gold);
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            .star-btn:hover {
+                transform: scale(1.1);
+                background: rgba(215, 174, 108, 0.1);
+            }
+            .star-btn.starred {
+                background: var(--coco-gold);
+                color: white;
+                box-shadow: 0 4px 15px rgba(215, 174, 108, 0.4);
+            }
+            .star-btn.starred i {
+                animation: star-pop 0.3s ease;
+            }
+            @keyframes star-pop {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.4); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
+
+async function toggleStar(targetId, targetType, btn) {
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch('/api/social/toggle', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ target_id: targetId, target_type: targetType })
+        });
+        const data = await response.json();
+        if (data.success) {
+            const icon = btn.querySelector('i');
+            if (data.action === 'STARRED') {
+                icon.className = 'ri-star-fill';
+                btn.classList.add('starred');
+            } else {
+                icon.className = 'ri-star-line';
+                btn.classList.remove('starred');
+            }
+        } else {
+            alert(data.message || "Something went wrong");
+        }
+    } catch (err) {
+        console.error("Error toggling star:", err);
+    }
+}
+
 
 function getAchievements(user) {
     // Map of obtained badge names for easy lookup
@@ -353,4 +466,82 @@ async function loadUserNotes(userId) {
         console.error('Error loading notes:', err);
         notesContainer.innerHTML = '<p style="text-align: center; color: #c33;">Failed to load notes.</p>';
     }
+}
+
+function formatNumber(num) {
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return num.toString();
+}
+
+async function showSocialList(userId, title) {
+    const token = localStorage.getItem('token');
+
+    // Create modal if not exists
+    let modal = document.getElementById('social-list-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'social-list-modal';
+        modal.className = 'social-modal';
+        modal.innerHTML = `
+            <div class="social-modal-content">
+                <div class="social-modal-header">
+                    <h3 id="social-modal-title">List</h3>
+                    <button class="social-modal-close" onclick="closeSocialModal()">×</button>
+                </div>
+                <div id="social-list-content" class="social-list-container">
+                    <div class="empty-social-msg">Loading...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeSocialModal();
+        });
+    }
+
+    document.getElementById('social-modal-title').innerText = title;
+    const content = document.getElementById('social-list-content');
+    content.innerHTML = '<div class="empty-social-msg">Loading...</div>';
+
+    modal.classList.add('active');
+
+    try {
+        const endpoint = title === 'Followers' ? `/api/social/followers?user_id=${userId}` : `/api/social/list?user_id=${userId}&type=user`;
+        const response = await fetch(endpoint, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (data.length === 0) {
+            content.innerHTML = `<div class="empty-social-msg">No ${title.toLowerCase()} found</div>`;
+            return;
+        }
+
+        content.innerHTML = data.map(u => `
+            <a href="user-profile.html?id=${u.user_id}" class="social-user-item">
+                <div class="social-user-avatar">
+                   ${u.profile_picture ? `<img src="${u.profile_picture}" alt="avatar">` : u.name[0]}
+                </div>
+                <div class="social-user-info">
+                    <h4>${u.name}</h4>
+                    <p>${u.department || 'No department'} • ${u.student_id || 'Student ID'}</p>
+                </div>
+                <i class="ri-arrow-right-s-line" style="color: #ccc;"></i>
+            </a>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error fetching social list:', err);
+        content.innerHTML = '<div class="empty-social-msg">Error loading list</div>';
+    }
+}
+
+function closeSocialModal() {
+    const modal = document.getElementById('social-list-modal');
+    if (modal) modal.classList.remove('active');
 }
