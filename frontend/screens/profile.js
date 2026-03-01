@@ -72,11 +72,11 @@ function renderUserProfile(user) {
                 <span class="stat-num" style="color: var(--coco-gold);">${formatNumber(user.total_points || 0)}</span>
                 <span class="stat-label">Coco Points</span>
             </div>
-            <div class="stat-box">
+            <div class="stat-box clickable" id="self-followers-btn">
                 <span class="stat-num">${formatNumber(user.follower_count || 0)}</span>
                 <span class="stat-label">Followers</span>
             </div>
-            <div class="stat-box">
+            <div class="stat-box clickable" id="self-following-btn">
                 <span class="stat-num">${formatNumber(user.following_count || 0)}</span>
                 <span class="stat-label">Following</span>
             </div>
@@ -94,6 +94,17 @@ function renderUserProfile(user) {
             </div>
         </div>
     `;
+
+    // Add click listeners to followers/following
+    const followersBtn = document.getElementById('self-followers-btn');
+    const followingBtn = document.getElementById('self-following-btn');
+
+    if (followersBtn) {
+        followersBtn.addEventListener('click', () => showSocialList(user.user_id, 'Followers'));
+    }
+    if (followingBtn) {
+        followingBtn.addEventListener('click', () => showSocialList(user.user_id, 'Following'));
+    }
 
     // Add achievements section
     addAchievementsSection(user);
@@ -449,4 +460,82 @@ function addBadgeTooltips() {
 
 function editProfile() {
     window.location.href = 'edit-profile.html';
+}
+
+function formatNumber(num) {
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return num.toString();
+}
+
+async function showSocialList(userId, title) {
+    const token = localStorage.getItem('token');
+
+    // Create modal if not exists
+    let modal = document.getElementById('social-list-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'social-list-modal';
+        modal.className = 'social-modal';
+        modal.innerHTML = `
+            <div class="social-modal-content">
+                <div class="social-modal-header">
+                    <h3 id="social-modal-title">List</h3>
+                    <button class="social-modal-close" onclick="closeSocialModal()">×</button>
+                </div>
+                <div id="social-list-content" class="social-list-container">
+                    <div class="empty-social-msg">Loading...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeSocialModal();
+        });
+    }
+
+    document.getElementById('social-modal-title').innerText = title;
+    const content = document.getElementById('social-list-content');
+    content.innerHTML = '<div class="empty-social-msg">Loading...</div>';
+
+    modal.classList.add('active');
+
+    try {
+        const endpoint = title === 'Followers' ? `/api/social/followers?user_id=${userId}` : `/api/social/list?user_id=${userId}&type=user`;
+        const response = await fetch(endpoint, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (data.length === 0) {
+            content.innerHTML = `<div class="empty-social-msg">No ${title.toLowerCase()} found</div>`;
+            return;
+        }
+
+        content.innerHTML = data.map(u => `
+            <a href="user-profile.html?id=${u.user_id}" class="social-user-item">
+                <div class="social-user-avatar">
+                   ${u.profile_picture ? `<img src="${u.profile_picture}" alt="avatar">` : u.name[0]}
+                </div>
+                <div class="social-user-info">
+                    <h4>${u.name}</h4>
+                    <p>${u.department || 'No department'} • ${u.student_id || 'Student ID'}</p>
+                </div>
+                <i class="ri-arrow-right-s-line" style="color: #ccc;"></i>
+            </a>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error fetching social list:', err);
+        content.innerHTML = '<div class="empty-social-msg">Error loading list</div>';
+    }
+}
+
+function closeSocialModal() {
+    const modal = document.getElementById('social-list-modal');
+    if (modal) modal.classList.remove('active');
 }

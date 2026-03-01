@@ -70,20 +70,25 @@ exports.getStarStatus = async (req, res) => {
     }
 };
 
-// --- Get Starred Entities ---
+// --- Get Starred Entities (Following) ---
 exports.getStarred = async (req, res) => {
     try {
-        const user_id = req.user.user_id;
+        const user_id = req.query.user_id || req.user.user_id;
         const { type } = req.query; // 'user' or 'course'
+
+        if (!type) {
+            return res.status(400).json({ message: "type is required" });
+        }
 
         let result;
         if (type === 'user') {
             result = await pool.query(`
-                SELECT u.user_id, u.name, u.profile_picture, d.name as department
+                SELECT u.user_id, u.name, u.profile_picture, d.name as department, u.student_id
                 FROM stars s
                 JOIN users u ON s.target_id = u.user_id
                 LEFT JOIN departments d ON u.department_id = d.department_id
                 WHERE s.user_id = $1 AND s.target_type = 'user'
+                ORDER BY s.created_at DESC
             `, [user_id]);
         } else if (type === 'course') {
             result = await pool.query(`
@@ -91,6 +96,7 @@ exports.getStarred = async (req, res) => {
                 FROM stars s
                 JOIN course c ON s.target_id = c.course_id
                 WHERE s.user_id = $1 AND s.target_type = 'course'
+                ORDER BY s.created_at DESC
             `, [user_id]);
         } else {
             return res.status(400).json({ message: "Invalid type" });
@@ -100,5 +106,26 @@ exports.getStarred = async (req, res) => {
     } catch (err) {
         console.error("Get Starred Error:", err);
         res.status(500).json({ message: "Server error fetching starred items" });
+    }
+};
+
+// --- Get Followers ---
+exports.getFollowers = async (req, res) => {
+    try {
+        const user_id = req.query.user_id || req.user.user_id;
+
+        const result = await pool.query(`
+            SELECT u.user_id, u.name, u.profile_picture, d.name as department, u.student_id
+            FROM stars s
+            JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN departments d ON u.department_id = d.department_id
+            WHERE s.target_id = $1 AND s.target_type = 'user'
+            ORDER BY s.created_at DESC
+        `, [user_id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Get Followers Error:", err);
+        res.status(500).json({ message: "Server error fetching followers" });
     }
 };
