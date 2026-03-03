@@ -18,12 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+// Re-fetch notes when navigating back to ensure fresh rating data
+window.addEventListener('pageshow', (event) => {
+    // Re-fetch if it's the first load or navigating back from another page
+    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        fetchNotes();
+        fetchRecommendations();
+    }
+});
+
 async function fetchRecommendations() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
     try {
-        const response = await fetch('/api/notes/recommendations', {
+        const response = await fetch(`/api/notes/recommendations?_t=${Date.now()}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const notes = await response.json();
@@ -73,10 +82,10 @@ async function fetchNotes() {
     const params = new URLSearchParams(window.location.search);
     const dept = params.get('dept');
 
-    // 2. Build the URL. If dept exists, add it to the API call.
-    let url = '/api/notes/feed';
+    // 2. Build the URL with cache-busting
+    let url = `/api/notes/feed?_t=${Date.now()}`;
     if (dept && dept !== 'All') {
-        url += `?dept=${encodeURIComponent(dept)}`;
+        url += `&dept=${encodeURIComponent(dept)}`;
     }
 
     try {
@@ -156,6 +165,11 @@ function renderFeed(notes) {
                     <div class="stat-pill">
                         <span class="icon">⬇️</span> <span class="download-count">${n.downloads || 0}</span>
                     </div>
+                    ${n.average_rating > 0 ? `
+                    <div class="stat-pill">
+                        <span class="icon">⭐</span> <span>${n.average_rating}</span>
+                    </div>
+                    ` : ''}
                 </div>
 
                 <a href="${n.file_path}" target="_blank" 
@@ -197,6 +211,11 @@ function renderFeed(notes) {
                             <div class="stat-pill minimal">
                                 <span class="icon">⬇️</span> <span class="download-count">${n.downloads || 0}</span>
                             </div>
+                            ${n.average_rating > 0 ? `
+                            <div class="stat-pill minimal">
+                                <span class="icon" style="color:var(--coco-gold);">⭐</span> <span>${n.average_rating}</span>
+                            </div>
+                            ` : ''}
                         </div>
 
                         <div class="btn-group">

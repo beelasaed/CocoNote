@@ -9,6 +9,8 @@ SELECT
     n.batch,
     n.upvotes, 
     n.downloads, 
+    COALESCE((SELECT AVG(rating)::numeric(3,1) FROM note_rating nr WHERE nr.note_id = n.note_id), 0) AS average_rating,
+    COALESCE((SELECT COUNT(*) FROM note_rating nr WHERE nr.note_id = n.note_id), 0) AS rating_count,
     u.name AS uploader, 
     c.code AS course, 
     d.name AS department, 

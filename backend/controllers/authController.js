@@ -12,6 +12,11 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
         }
 
+        const batchNum = parseInt(batch);
+        if (isNaN(batchNum) || batchNum < 12 || batchNum > 24) {
+            return res.status(400).json({ message: "Invalid Batch. Only batches 12 to 24 are accepted." });
+        }
+
 
         const idCheck = await pool.query('SELECT * FROM valid_student_ids WHERE student_id = $1', [student_id]);
         if (idCheck.rows.length === 0) {

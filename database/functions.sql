@@ -14,7 +14,9 @@ RETURNS TABLE (
     course_code VARCHAR,
     created_at TIMESTAMP,
     upvotes INT,
-    downloads INT
+    downloads INT,
+    average_rating NUMERIC(3,1),
+    rating_count INT
 ) 
 LANGUAGE plpgsql
 AS $$
@@ -29,7 +31,9 @@ BEGIN
         c.code, 
         n.created_at,
         n.upvotes,
-        n.downloads
+        n.downloads,
+        COALESCE((SELECT AVG(rating)::numeric(3,1) FROM note_rating nr WHERE nr.note_id = n.note_id), 0) AS average_rating,
+        COALESCE((SELECT COUNT(*) FROM note_rating nr WHERE nr.note_id = n.note_id), 0) AS rating_count
     FROM note n
     JOIN users u ON n.uploader_id = u.user_id
     JOIN course c ON n.course_id = c.course_id
@@ -59,6 +63,8 @@ RETURNS TABLE (
     course VARCHAR,
     department VARCHAR,
     category VARCHAR,
+    average_rating NUMERIC(3,1),
+    rating_count INT,
     is_upvoted BOOLEAN 
 ) 
 LANGUAGE plpgsql
@@ -78,6 +84,8 @@ BEGIN
         v.course, 
         v.department, 
         v.category,
+        v.average_rating,
+        v.rating_count,
         EXISTS(
             SELECT 1 FROM upvote u 
             WHERE u.note_id = v.note_id AND u.user_id = current_user_id
@@ -101,6 +109,8 @@ RETURNS TABLE (
     course VARCHAR,
     department VARCHAR,
     category VARCHAR,
+    average_rating NUMERIC(3,1),
+    rating_count INT,
     is_upvoted BOOLEAN,
     is_saved BOOLEAN
 ) 
@@ -121,6 +131,8 @@ BEGIN
         v.course, 
         v.department, 
         v.category,
+        v.average_rating,
+        v.rating_count,
         EXISTS(
             SELECT 1 FROM upvote u 
             WHERE u.note_id = v.note_id AND u.user_id = current_user_id

@@ -80,6 +80,11 @@ exports.getStarred = async (req, res) => {
             return res.status(400).json({ message: "type is required" });
         }
 
+        // Privacy check: Starred courses should only be visible to the owner
+        if (type === 'course' && parseInt(user_id) !== req.user.user_id) {
+            return res.status(403).json({ message: "Privacy restriction: You cannot view another user's starred courses." });
+        }
+
         let result;
         if (type === 'user') {
             result = await pool.query(`

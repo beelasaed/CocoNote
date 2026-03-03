@@ -125,6 +125,8 @@ CREATE TABLE comment (
     parent_comment_id INT REFERENCES comment(comment_id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     score INT DEFAULT 0,
+    upvotes INT DEFAULT 0,
+    downvotes INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -142,4 +144,14 @@ CREATE TABLE note_notification_preference (
     note_id INT NOT NULL REFERENCES note(note_id) ON DELETE CASCADE,
     receive_notifications BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id, note_id)
+);
+
+CREATE TABLE notification (
+    notification_id SERIAL PRIMARY KEY,
+    recipient_user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    actor_user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    note_id INT REFERENCES note(note_id) ON DELETE CASCADE,
+    action_type VARCHAR(50) NOT NULL, -- 'upvote', 'download', 'comment', 'comment_reply'
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
 );

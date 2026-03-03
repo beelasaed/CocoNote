@@ -49,14 +49,14 @@ BEGIN
     ELSIF TG_TABLE_NAME = 'note_rating' THEN
         IF TG_OP = 'INSERT' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
-            _points_change := 5; -- Receive rating: +5 points
+            _points_change := 0; -- Receive rating: 0 points (requested by user)
             
             -- Create notification for uploader
             INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
             VALUES (_user_id, NEW.user_id, NEW.note_id, 'rating');
         ELSIF TG_OP = 'DELETE' THEN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = OLD.note_id;
-            _points_change := -5;
+            _points_change := 0;
         END IF;
     END IF;
 
@@ -279,6 +279,7 @@ DROP TRIGGER IF EXISTS trg_check_plagiarism ON note;
 CREATE TRIGGER trg_check_plagiarism
 BEFORE INSERT ON note
 FOR EACH ROW
+EXECUTE FUNCTION check_plagiarism();
 -- ==========================================
 -- 4. COMMENT & DISCUSSION TRIGGERS
 -- ==========================================
@@ -353,12 +354,34 @@ CREATE OR REPLACE FUNCTION handle_comment_vote()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
+        -- Net Score
         UPDATE comment SET score = score + NEW.vote_type WHERE comment_id = NEW.comment_id;
+        -- Separate Counts
+        IF NEW.vote_type = 1 THEN
+            UPDATE comment SET upvotes = upvotes + 1 WHERE comment_id = NEW.comment_id;
+        ELSE
+            UPDATE comment SET downvotes = downvotes + 1 WHERE comment_id = NEW.comment_id;
+        END IF;
+
     ELSIF TG_OP = 'UPDATE' THEN
-        -- Subtract old vote and add new vote (e.g., changing from -1 to 1 is +2)
+        -- Net Score
         UPDATE comment SET score = score - OLD.vote_type + NEW.vote_type WHERE comment_id = NEW.comment_id;
+        -- Separate Counts
+        IF OLD.vote_type = 1 AND NEW.vote_type = -1 THEN
+            UPDATE comment SET upvotes = upvotes - 1, downvotes = downvotes + 1 WHERE comment_id = NEW.comment_id;
+        ELSIF OLD.vote_type = -1 AND NEW.vote_type = 1 THEN
+            UPDATE comment SET downvotes = downvotes - 1, upvotes = upvotes + 1 WHERE comment_id = NEW.comment_id;
+        END IF;
+
     ELSIF TG_OP = 'DELETE' THEN
+        -- Net Score
         UPDATE comment SET score = score - OLD.vote_type WHERE comment_id = OLD.comment_id;
+        -- Separate Counts
+        IF OLD.vote_type = 1 THEN
+            UPDATE comment SET upvotes = upvotes - 1 WHERE comment_id = OLD.comment_id;
+        ELSE
+            UPDATE comment SET downvotes = downvotes - 1 WHERE comment_id = OLD.comment_id;
+        END IF;
     END IF;
     RETURN NULL;
 END;

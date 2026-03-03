@@ -30,6 +30,12 @@ exports.uploadNote = async (req, res) => {
         }
 
         const { title, description, batch, department_id, course_id, category_id } = req.body;
+
+        const batchNum = parseInt(batch);
+        if (isNaN(batchNum) || batchNum < 12 || batchNum > 24) {
+            return res.status(400).json({ message: "Invalid Batch. Only batches 12 to 24 are accepted." });
+        }
+
         const uploader_id = req.user.user_id;
         const filePath = '/uploads/' + req.file.filename;
 
@@ -108,6 +114,8 @@ exports.getUserNotes = async (req, res) => {
                 n.batch,
                 n.upvotes,
                 n.downloads,
+                COALESCE(nr.average_rating, 0) AS average_rating,
+                COALESCE(nr.rating_count, 0) AS rating_count,
                 n.created_at,
                 c.name AS category,
                 co.code AS course_code,
@@ -120,6 +128,11 @@ exports.getUserNotes = async (req, res) => {
             LEFT JOIN course co ON n.course_id = co.course_id
             LEFT JOIN departments d ON n.department_id = d.department_id
             LEFT JOIN users u ON n.uploader_id = u.user_id
+            LEFT JOIN (
+                SELECT note_id, AVG(rating)::numeric(3,1) AS average_rating, COUNT(*) AS rating_count
+                FROM note_rating
+                GROUP BY note_id
+            ) nr ON n.note_id = nr.note_id
             WHERE n.uploader_id = $1
             ORDER BY n.created_at DESC
         `, [user_id]);
@@ -177,6 +190,8 @@ exports.getNotesByUser = async (req, res) => {
                 n.batch,
                 n.upvotes,
                 n.downloads,
+                COALESCE(nr.average_rating, 0) AS average_rating,
+                COALESCE(nr.rating_count, 0) AS rating_count,
                 n.created_at,
                 c.name AS category,
                 co.code AS course_code,
@@ -189,6 +204,11 @@ exports.getNotesByUser = async (req, res) => {
             LEFT JOIN course co ON n.course_id = co.course_id
             LEFT JOIN departments d ON n.department_id = d.department_id
             LEFT JOIN users u ON n.uploader_id = u.user_id
+            LEFT JOIN (
+                SELECT note_id, AVG(rating)::numeric(3,1) AS average_rating, COUNT(*) AS rating_count
+                FROM note_rating
+                GROUP BY note_id
+            ) nr ON n.note_id = nr.note_id
             WHERE n.uploader_id = $1
             ORDER BY n.created_at DESC
         `, [user_id]);
@@ -533,6 +553,8 @@ exports.getSavedNotes = async (req, res) => {
                 n.batch,
                 n.upvotes,
                 n.downloads,
+                COALESCE(nr.average_rating, 0) AS average_rating,
+                COALESCE(nr.rating_count, 0) AS rating_count,
                 n.created_at,
                 c.name AS category,
                 co.code AS course_code,
@@ -547,6 +569,11 @@ exports.getSavedNotes = async (req, res) => {
             LEFT JOIN course co ON n.course_id = co.course_id
             LEFT JOIN departments d ON n.department_id = d.department_id
             LEFT JOIN users u ON n.uploader_id = u.user_id
+            LEFT JOIN (
+                SELECT note_id, AVG(rating)::numeric(3,1) AS average_rating, COUNT(*) AS rating_count
+                FROM note_rating
+                GROUP BY note_id
+            ) nr ON n.note_id = nr.note_id
             WHERE sn.user_id = $1
             ORDER BY sn.saved_at DESC
         `, [user_id]);
@@ -669,7 +696,22 @@ exports.submitRating = async (req, res) => {
             SET rating = EXCLUDED.rating, rated_at = NOW()
         `, [note_id, user_id, rating]);
 
-        res.json({ success: true, message: "Rating submitted successfully!" });
+        // Get updated stats
+        const stats = await pool.query(`
+            SELECT 
+                AVG(rating)::numeric(3,1) AS average_rating,
+                COUNT(*) AS rating_count
+            FROM note_rating 
+            WHERE note_id = $1
+        `, [note_id]);
+
+
+        res.json({
+            success: true,
+            message: "Rating submitted successfully!",
+            average_rating: stats.rows[0].average_rating || 0.0,
+            rating_count: stats.rows[0].rating_count || 0
+        });
 
     } catch (err) {
         console.error("Submit Rating Error:", err);

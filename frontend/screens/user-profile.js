@@ -456,6 +456,9 @@ async function loadUserNotes(userId) {
                 <div class="note-stats">
                     <div class="stat-item"><i class="ri-thumb-up-line"></i> ${note.upvotes || 0}</div>
                     <div class="stat-item"><i class="ri-download-line"></i> ${note.downloads || 0}</div>
+                    ${note.average_rating > 0 ? `
+                    <div class="stat-item" style="color: var(--coco-gold);"><i class="ri-star-fill"></i> ${note.average_rating}</div>
+                    ` : ''}
                 </div>
             </div>
         `).join('');

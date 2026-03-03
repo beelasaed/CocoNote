@@ -8,7 +8,7 @@ function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000, 
     toast.className = 'toast-notification';
 
     let content = `<span class="toast-msg">${message}</span>`;
-    if (linkUrl) content += `<a href="${linkUrl}" target="_blank" class="toast-btn">${linkText}</a>`;
+    if (linkUrl) content += `<a href="${linkUrl}" class="toast-btn">${linkText}</a>`;
 
     toast.innerHTML = content;
     document.body.appendChild(toast);
@@ -107,8 +107,8 @@ async function fetchNotifications() {
 
         if (newBadgeNotifs.length > 0) {
             newBadgeNotifs.forEach(n => {
-                showBadgePopup(n.message);
-                // We no longer mark as read here. The user marks it read by clicking the notification icon.
+                const message = `🎉 You earned a new badge! Check your profile.`;
+                showBadgePopup(message, n.notification_id);
             });
         }
         // ----------------------------
@@ -127,6 +127,27 @@ async function fetchNotifications() {
         }
         // ----------------------------
 
+        // --- CHECK FOR NEW COMMENTS/REPLIES ---
+        const lastSeenNotifId = parseInt(localStorage.getItem('last_seen_notif_id') || '0');
+        const newInteractionNotifs = notifications.filter(n =>
+            (n.action_type === 'comment' || n.action_type === 'comment_reply') &&
+            !n.is_read &&
+            n.notification_id > lastSeenNotifId
+        );
+
+        if (newInteractionNotifs.length > 0) {
+            newInteractionNotifs.forEach(n => {
+                const msg = n.action_type === 'comment'
+                    ? `💬 ${n.actor_name} commented on your note: "${n.note_title}"`
+                    : `↪️ ${n.actor_name} replied to your comment on: "${n.note_title}"`;
+                showToast(msg, `note-details.html?id=${n.note_id}`, "View", 5000, false);
+            });
+            // Update last seen
+            const maxId = Math.max(...newInteractionNotifs.map(n => n.notification_id));
+            localStorage.setItem('last_seen_notif_id', maxId.toString());
+        }
+        // ----------------------------
+
         saveNotificationsToStorage(notifications);
         updateBadge();
     } catch (err) {
@@ -135,7 +156,7 @@ async function fetchNotifications() {
 }
 
 // --- BADGE CELEBRATION ---
-function showBadgePopup(message) {
+function showBadgePopup(message, notificationId) {
     // 1. Trigger Confetti
     triggerConfetti();
 
@@ -148,7 +169,7 @@ function showBadgePopup(message) {
             <div style="font-size: 5rem; margin-bottom: 10px;">🏆</div>
             <h2 style="color: var(--earth-brown); margin: 10px 0;">New Badge Unlocked!</h2>
             <p style="color: #666; margin-bottom: 20px;">${message || "You've just earned a new achievement."}</p>
-            <button onclick="this.closest('.badge-popup-modal').remove()" style="
+            <button id="badge-awesome-btn" style="
                 background: var(--coco-gold); 
                 color: white; 
                 border: none; 
@@ -200,6 +221,16 @@ function showBadgePopup(message) {
         </style>
     `;
     document.body.appendChild(modal);
+
+    const awesomeBtn = modal.querySelector('#badge-awesome-btn');
+    if (awesomeBtn) {
+        awesomeBtn.onclick = async () => {
+            if (notificationId) {
+                await markNotificationRead(notificationId);
+            }
+            modal.remove();
+        };
+    }
 }
 
 function triggerConfetti() {
@@ -411,6 +442,12 @@ function renderHistory() {
                     notification_id: n.notification_id,
                     action_type: n.action_type
                 };
+            } else if (n.action_type === 'comment') {
+                actionMsg = '💬 commented on';
+                icon = '💬';
+            } else if (n.action_type === 'comment_reply') {
+                actionMsg = '↪️ replied to your comment on';
+                icon = '↪️';
             }
 
             if (!message) {

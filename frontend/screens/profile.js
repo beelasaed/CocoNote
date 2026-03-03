@@ -144,6 +144,7 @@ function setupTabsAndRender(userNotes, token) {
             <div class="profile-tabs">
                 <button class="tab-btn active" data-tab="my-uploads">My Uploads</button>
                 <button class="tab-btn" data-tab="saved-notes">Saved Notes</button>
+                <button class="tab-btn" data-tab="starred-courses">Starred Courses</button>
             </div>
             <div id="tab-content" class="tab-content"></div>
         `;
@@ -166,6 +167,8 @@ function setupTabsAndRender(userNotes, token) {
                 renderNotesSection(userNotes);
             } else if (tabName === 'saved-notes') {
                 loadSavedNotes(token);
+            } else if (tabName === 'starred-courses') {
+                loadStarredCourses(token);
             }
         });
     });
@@ -238,6 +241,9 @@ function renderSavedNotes(notes) {
                         <div style="display: flex; gap: 20px; font-size: 0.9rem; margin-bottom: 12px;">
                             <span style="color: var(--coco-gold); font-weight: 600;"><i class="ri-heart-line"></i> ${note.upvotes || 0} Upvotes</span>
                             <span style="color: #666;"><i class="ri-download-line"></i> ${note.downloads || 0} Downloads</span>
+                            ${note.average_rating > 0 ? `
+                            <span style="color: var(--coco-gold); font-weight: 600;"><i class="ri-star-fill"></i> ${note.average_rating}</span>
+                            ` : ''}
                             <span style="color: #888;"><i class="ri-user-line"></i> ${note.uploader}</span>
                         </div>
                         <div style="font-size: 0.85rem; color: #aaa;">
@@ -309,6 +315,9 @@ function renderNotesSection(notes) {
                         <div style="display: flex; gap: 20px; font-size: 0.9rem;">
                             <span style="color: var(--coco-gold); font-weight: 600;"><i class="ri-heart-line"></i> ${note.upvotes || 0} Upvotes</span>
                             <span style="color: #666;"><i class="ri-download-line"></i> ${note.downloads || 0} Downloads</span>
+                            ${note.average_rating > 0 ? `
+                            <span style="color: var(--coco-gold); font-weight: 600;"><i class="ri-star-fill"></i> ${note.average_rating}</span>
+                            ` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -579,3 +588,96 @@ document.addEventListener('click', (e) => {
         deleteNote(deleteBtn.dataset.id);
     }
 });
+async function loadStarredCourses(token) {
+    const tabContent = document.querySelector('#tab-content');
+
+    tabContent.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #999;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
+            <p>Loading starred courses...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch('/api/social/list?type=course', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load courses');
+
+        const courses = await response.json();
+        renderStarredCourses(courses, token);
+
+    } catch (err) {
+        console.error('Error:', err);
+        tabContent.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #c33;">
+                <i class="ri-error-warning-line" style="font-size: 3rem; margin-bottom: 10px; display: block;"></i>
+                <p>Failed to load starred courses</p>
+            </div>
+        `;
+    }
+}
+
+function renderStarredCourses(courses, token) {
+    const tabContent = document.querySelector('#tab-content');
+
+    if (courses.length === 0) {
+        tabContent.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #999;">
+                <i class="ri-heart-line" style="font-size: 3rem; margin-bottom: 10px; display: block;"></i>
+                <p>You haven't starred any courses yet.</p>
+                <a href="feed.html" style="color: var(--coco-gold); text-decoration: none; font-weight: 600; margin-top: 10px; display: inline-block;">
+                    <i class="ri-search-line"></i> Find Courses
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    tabContent.innerHTML = `
+        <div class="courses-grid" style="display: grid; gap: 15px;">
+            ${courses.map(course => `
+                <div class="course-item-card" style="padding: 15px; background: var(--coco-cream); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(215, 174, 108, 0.1);">
+                    <div>
+                        <h4 style="margin: 0; color: var(--coco-earth);">${course.name}</h4>
+                        <span style="font-size: 0.85rem; color: #888;">${course.code}</span>
+                    </div>
+                    <button class="unstar-course-btn" data-id="${course.course_id}" style="background: none; border: 1px solid var(--coco-gold); color: var(--coco-gold); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: 0.2s;">
+                        Unstar
+                    </button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // Unstar logic
+    tabContent.querySelectorAll('.unstar-course-btn').forEach(btn => {
+        btn.onclick = async () => {
+            const courseId = btn.dataset.id;
+            await unstarCourse(courseId, token);
+        };
+    });
+}
+
+async function unstarCourse(courseId, token) {
+    try {
+        const response = await fetch('/api/social/toggle', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ target_id: courseId, target_type: 'course' })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast("Course unstarred! 🥥");
+            loadStarredCourses(token); // Refresh
+        }
+    } catch (err) {
+        console.error("Unstar Error:", err);
+        showToast("Error unstarring course");
+    }
+}
