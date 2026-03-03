@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
         console.error('Error:', err);
-        alert('Failed to load profile data');
+        showToast('Failed to load profile data');
     }
 
     // Handle profile picture preview
@@ -83,23 +83,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (response.ok) {
-                alert('Profile updated successfully!');
-                window.location.href = 'profile.html';
+                showToast('Profile updated successfully! ✨');
+                setTimeout(() => window.location.href = 'profile.html', 1500);
             } else {
                 console.error('Update failed logic:', data);
-                alert(data.message || 'Update failed');
+                showToast(data.message || 'Update failed');
             }
         } catch (err) {
             console.error('Detailed Error updating profile:', err);
-            alert('An error occurred: ' + err.message);
+            showToast('An error occurred during update');
         }
     });
 
     // Handle account deletion
-    deleteAccountBtn.addEventListener('click', async () => {
-        const confirmDelete = confirm('Are you sure you want to delete your account? This action is permanent and will delete all your notes and data.');
-
-        if (confirmDelete) {
+    deleteAccountBtn.addEventListener('click', () => {
+        showConfirm('Are you sure you want to delete your account? This action is permanent and will delete all your notes and data.', async () => {
             try {
                 const response = await fetch('/api/auth/profile', {
                     method: 'DELETE',
@@ -107,17 +105,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (response.ok) {
-                    alert('Your account has been deleted.');
+                    showToast('Your account has been deleted. We are sorry to see you go. 🥥');
                     localStorage.removeItem('token');
-                    window.location.href = 'login.html';
+                    setTimeout(() => window.location.href = 'login.html', 2000);
                 } else {
                     const data = await response.json();
-                    alert(data.message || 'Failed to delete account');
+                    showToast(data.message || 'Failed to delete account');
                 }
             } catch (err) {
                 console.error('Error deleting account:', err);
-                alert('An error occurred while deleting account');
+                showToast('An error occurred while deleting account');
             }
-        }
+        });
     });
 });

@@ -129,3 +129,36 @@ exports.getFollowers = async (req, res) => {
         res.status(500).json({ message: "Server error fetching followers" });
     }
 };
+
+// --- Search Users by Name/Username ---
+exports.searchUsers = async (req, res) => {
+    try {
+        const { query } = req.query;
+        if (!query || query.trim().length === 0) {
+            return res.json([]);
+        }
+
+        const searchTerm = `%${query.trim()}%`;
+
+        const result = await pool.query(`
+            SELECT 
+                u.user_id, 
+                u.name, 
+                u.profile_picture, 
+                d.name as department, 
+                u.student_id,
+                u.batch,
+                (SELECT COUNT(*) FROM stars s WHERE s.target_id = u.user_id AND s.target_type = 'user') as follower_count
+            FROM users u
+            LEFT JOIN departments d ON u.department_id = d.department_id
+            WHERE u.name ILIKE $1 OR u.student_id ILIKE $1
+            ORDER BY u.name ASC
+            LIMIT 20
+        `, [searchTerm]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Search Users Error:", err);
+        res.status(500).json({ success: false, message: "Server error while searching users" });
+    }
+};

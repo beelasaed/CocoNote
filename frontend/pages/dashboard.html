@@ -50,13 +50,17 @@
     <main class="dashboard-main">
         <section class="hero-section animate-up">
             <div class="search-hero-card">
-                <h1>Find your notes</h1>
-                <div class="search-bar-box">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" placeholder="Search by course, title, or keyword...">
+                <div class="search-type-toggle">
+                    <button class="search-type-btn active" data-type="notes">Notes</button>
+                    <button class="search-type-btn" data-type="people">People</button>
                 </div>
 
-                <div class="search-filters">
+                <div class="search-bar-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="dashboard-search-input" placeholder="Search by course, title, or keyword...">
+                </div>
+
+                <div class="search-filters" id="notes-filters">
                     <select class="filter-pill">
                         <option>Batch</option>
                     </select>

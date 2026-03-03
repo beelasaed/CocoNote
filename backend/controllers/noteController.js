@@ -230,7 +230,9 @@ exports.getNoteById = async (req, res) => {
                 CASE WHEN EXISTS(SELECT 1 FROM upvote WHERE upvote.note_id = n.note_id AND upvote.user_id = $2) THEN true ELSE false END AS is_upvoted,
                 COALESCE((SELECT AVG(rating)::numeric(3,1) FROM note_rating WHERE note_id = n.note_id), 0) AS average_rating,
                 COALESCE((SELECT COUNT(*) FROM note_rating WHERE note_id = n.note_id), 0) AS rating_count,
-                (SELECT rating FROM note_rating WHERE note_id = n.note_id AND user_id = $2) AS user_rating
+                (SELECT rating FROM note_rating WHERE note_id = n.note_id AND user_id = $2) AS user_rating,
+                COALESCE((SELECT COUNT(*) FROM comment WHERE note_id = n.note_id), 0) AS comment_count,
+                CASE WHEN (SELECT COUNT(*) FROM comment WHERE note_id = n.note_id) >= 5 THEN true ELSE false END AS is_highly_discussed
             FROM note n
             LEFT JOIN category c ON n.category_id = c.category_id
             LEFT JOIN course co ON n.course_id = co.course_id

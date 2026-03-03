@@ -178,8 +178,35 @@ body {
     padding: 3rem;
     border-radius: 2rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
-    text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
+}
+
+.search-type-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.search-type-btn {
+    background: var(--coco-cream);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.6rem 2rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    color: var(--coco-brown);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.search-type-btn.active {
+    background: var(--coco-earth);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 59, 50, 0.2);
+}
+
+.search-type-btn:hover:not(.active) {
+    background: #f0e6d6;
 }
 
 .search-hero-card h1 {

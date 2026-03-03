@@ -29,10 +29,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     deptSelect.innerHTML += `<option value="${dept.department_id}">${dept.name}</option>`;
                 });
 
-                // Populate Courses (FIXED LINE BELOW)
+                // Populate Courses
                 data.courses.forEach(course => {
-                    // Was: value="${course_id}" -> caused the error
-                    // Now: value="${course.course_id}"
                     courseSelect.innerHTML += `<option value="${course.course_id}">${course.code} - ${course.name}</option>`;
                 });
 
@@ -49,18 +47,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadOptions();
 
     // 3. File Selection UI Logic
-    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('click', (e) => {
+        // If clicking the remove button, don't trigger file browse
+        if (e.target.classList.contains('remove-file-btn')) return;
+        fileInput.click();
+    });
 
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) {
             const fileName = fileInput.files[0].name;
-            fileListDiv.innerHTML = `<div class="file-item">📄 ${fileName}</div>`;
+            fileListDiv.innerHTML = `
+                <div class="file-item">
+                    <span>📄 ${fileName}</span>
+                    <button type="button" class="remove-file-btn" id="remove-file-btn">×</button>
+                </div>
+            `;
+
+            // Add listener to remove button
+            document.getElementById('remove-file-btn').addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop bubbling to dropZone
+                fileInput.value = ''; // Clear file input
+                fileListDiv.innerHTML = ''; // Clear preview
+            });
         }
     });
 
     // 4. Handle Form Submission
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if (!fileInput.files[0]) {
+            if (typeof showToast === 'function') {
+                showToast("Please select a PDF file first.");
+            } else {
+                alert("Please select a PDF file first.");
+            }
+            return;
+        }
 
         // Use FormData to send both text fields and the PDF file
         const formData = new FormData();
@@ -91,7 +114,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     alert(successMessage);
                 }
 
-                // Wait longer if flagged to let users read the warning
                 const delay = result.warning ? 3000 : 1500;
                 setTimeout(() => {
                     window.location.href = 'feed.html';
@@ -104,7 +126,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     alert("⚠️ Error: " + errorMessage);
                 }
-                console.log(result);
             }
         } catch (err) {
             console.error("Submission Error:", err);
