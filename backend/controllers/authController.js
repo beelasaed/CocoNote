@@ -2,11 +2,16 @@ const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 // --- REGISTER USER ---
 exports.registerUser = async (req, res) => {
     const { name, student_id, email, department_id, batch, password } = req.body;
 
     try {
+        if (!JWT_SECRET) {
+            return res.status(500).json({ message: 'Server auth configuration error' });
+        }
 
         if (!email.endsWith('@iut-dhaka.edu')) {
             return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
@@ -56,6 +61,9 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        if (!JWT_SECRET) {
+            return res.status(500).json({ message: 'Server auth configuration error' });
+        }
 
         if (!email.endsWith('@iut-dhaka.edu')) {
             return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
