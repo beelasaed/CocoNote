@@ -249,7 +249,7 @@ function renderDashboardResults(notes) {
                     <div class="dashboard-result-main">
                         <div class="dashboard-result-title">${n.title}</div>
                         <div class="dashboard-result-meta">${n.course || 'Course'} • Batch ${n.batch || '-'} ${n.category ? ' • ' + n.category : ''}</div>
-                        <div class="dashboard-result-stats">🥥 ${n.upvotes || 0} • ⬇️ ${n.downloads || 0} ${n.uploader ? ' • ' + n.uploader : ''}</div>
+                        <div class="dashboard-result-stats">🥥 ${n.upvotes || 0} • ⬇️ ${n.downloads || 0} ${n.average_rating > 0 ? ' • ⭐ ' + n.average_rating : ''} ${n.uploader ? ' • ' + n.uploader : ''}</div>
                     </div>
                     <a href="note-details.html?id=${n.note_id}" class="dashboard-result-link">View Details</a>
                 </div>

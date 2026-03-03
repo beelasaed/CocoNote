@@ -2,14 +2,24 @@ const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 // --- REGISTER USER ---
 exports.registerUser = async (req, res) => {
     const { name, student_id, email, department_id, batch, password } = req.body;
 
     try {
+        if (!JWT_SECRET) {
+            return res.status(500).json({ message: 'Server auth configuration error' });
+        }
 
         if (!email.endsWith('@iut-dhaka.edu')) {
             return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
+        }
+
+        const batchNum = parseInt(batch);
+        if (isNaN(batchNum) || batchNum < 12 || batchNum > 24) {
+            return res.status(400).json({ message: "Invalid Batch. Only batches 12 to 24 are accepted." });
         }
 
 
@@ -51,6 +61,9 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        if (!JWT_SECRET) {
+            return res.status(500).json({ message: 'Server auth configuration error' });
+        }
 
         if (!email.endsWith('@iut-dhaka.edu')) {
             return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });

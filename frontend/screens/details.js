@@ -1,3 +1,5 @@
+let refreshComments;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
     const noteId = params.get('id');
@@ -254,6 +256,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     50% { transform: scale(1.4); }
                     100% { transform: scale(1); }
                 }
+
+                .vote-group {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+                .vote-actions {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                }
+                .active-up { color: #27ae60 !important; }
+                .active-down { color: #e74c3c !important; }
             `;
             document.head.appendChild(style);
         }
@@ -373,6 +388,9 @@ async function initCommentSystem(noteId, token) {
         }
     };
 
+    // Make it globally accessible for action functions
+    refreshComments = fetchComments;
+
     const renderComments = (comments) => {
         const currentUser = JSON.parse(localStorage.getItem('user'));
 
@@ -425,13 +443,19 @@ async function initCommentSystem(noteId, token) {
 
                     <div class="comment-actions">
                         <div class="vote-actions">
-                            <button class="vote-btn ${c.user_vote === 1 ? 'active-up' : ''}" onclick="voteComment(${c.comment_id}, 1, '${noteId}')">
-                                <i class="ri-arrow-up-s-line"></i>
-                            </button>
-                            <span class="comment-score">${c.score}</span>
-                            <button class="vote-btn ${c.user_vote === -1 ? 'active-down' : ''}" onclick="voteComment(${c.comment_id}, -1, '${noteId}')">
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
+                            <div class="vote-group">
+                                <button class="vote-btn ${c.user_vote === 1 ? 'active-up' : ''}" onclick="voteComment(${c.comment_id}, 1, '${noteId}')">
+                                    <i class="ri-arrow-up-s-line"></i>
+                                </button>
+                                <span class="comment-score">${c.upvotes || 0}</span>
+                            </div>
+                            
+                            <div class="vote-group">
+                                <button class="vote-btn ${c.user_vote === -1 ? 'active-down' : ''}" onclick="voteComment(${c.comment_id}, -1, '${noteId}')">
+                                    <i class="ri-arrow-down-s-line"></i>
+                                </button>
+                                <span class="comment-score">${c.downvotes || 0}</span>
+                            </div>
                         </div>
                         
                         ${!isReply ? `<a class="action-link" onclick="toggleReplyInput(${c.comment_id})"><i class="ri-reply-line"></i> Reply</a>` : ''}
@@ -522,7 +546,10 @@ async function postReply(parentCommentId, noteId) {
         console.log("Reply response:", result);
 
         if (response.ok) {
-            window.location.reload();
+            input.value = '';
+            if (refreshComments) await refreshComments();
+            // Hide the input
+            document.getElementById(`reply-container-${parentCommentId}`).style.display = 'none';
         } else {
             showToast(result.message || "Failed to post reply");
         }
@@ -543,7 +570,7 @@ async function voteComment(commentId, voteType, noteId) {
             },
             body: JSON.stringify({ vote_type: voteType })
         });
-        window.location.reload();
+        if (refreshComments) await refreshComments();
     } catch (err) {
         console.error("Vote error:", err);
     }
@@ -573,7 +600,10 @@ async function saveEdit(commentId, noteId) {
             },
             body: JSON.stringify({ content })
         });
-        if (response.ok) window.location.reload();
+        if (response.ok) {
+            if (refreshComments) await refreshComments();
+            cancelEdit(commentId); // Use existing function to restore UI
+        }
     } catch (err) {
         console.error("Edit error:", err);
     }
@@ -589,7 +619,7 @@ async function deleteComment(commentId, noteId) {
             });
             if (response.ok) {
                 showToast("Comment deleted 🗑️");
-                setTimeout(() => window.location.reload(), 1000);
+                if (refreshComments) await refreshComments();
             }
         } catch (err) {
             console.error("Delete error:", err);
@@ -698,6 +728,12 @@ function attachDetailsEventListeners(noteId, initialUserRating, noteData) {
                         updateStars(rating);
                         const status = document.getElementById('ratingStatus');
                         if (status) status.innerText = `Your rating: ${rating}`;
+
+                        // Update average rating and count instantly
+                        const avgText = document.querySelector('.avg-rating-text');
+                        if (avgText) {
+                            avgText.innerText = `⭐ ${data.average_rating} (${data.rating_count})`;
+                        }
                     } else {
                         showToast(data.message || 'Error submitting rating');
                     }

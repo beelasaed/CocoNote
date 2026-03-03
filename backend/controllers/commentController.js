@@ -113,6 +113,22 @@ exports.voteComment = async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid vote type" });
         }
 
+        // Check for existing vote
+        const existingVote = await pool.query(
+            "SELECT vote_type FROM comment_vote WHERE comment_id = $1 AND user_id = $2",
+            [comment_id, user_id]
+        );
+
+        if (existingVote.rowCount > 0 && existingVote.rows[0].vote_type === vote_type) {
+            // Un-vote if same type clicked again
+            await pool.query(
+                "DELETE FROM comment_vote WHERE comment_id = $1 AND user_id = $2",
+                [comment_id, user_id]
+            );
+            return res.json({ success: true, message: "Vote removed!" });
+        }
+
+        // Otherwise insert or update
         await pool.query(`
             INSERT INTO comment_vote (comment_id, user_id, vote_type)
             VALUES ($1, $2, $3)
