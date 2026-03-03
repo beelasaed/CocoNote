@@ -7,5 +7,6 @@ router.post('/toggle', protect, socialController.toggleStar);
 router.get('/status', protect, socialController.getStarStatus);
 router.get('/list', protect, socialController.getStarred);
 router.get('/followers', protect, socialController.getFollowers);
+router.get('/search', protect, socialController.searchUsers);
 
 module.exports = router;
