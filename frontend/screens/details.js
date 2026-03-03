@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (note.is_highly_discussed) {
             document.getElementById('highlyDiscussedBadge').style.display = 'inline-block';
         }
-        if (note.comment_count) {
+        if (note.comment_count !== undefined) {
             document.getElementById('commentCount').innerText = `(${note.comment_count})`;
         }
 
@@ -344,7 +344,7 @@ async function initNotificationPreference(noteId, token) {
                 body: JSON.stringify({ receive_notifications: toggle.checked })
             });
             const data = await response.json();
-            if (!response.ok) alert(data.message || "Failed to update preference");
+            if (!response.ok) showToast(data.message || "Failed to update preference");
         } catch (err) {
             console.error("Notif Pref Error:", err);
         }
@@ -376,6 +376,10 @@ async function initCommentSystem(noteId, token) {
     const renderComments = (comments) => {
         const currentUser = JSON.parse(localStorage.getItem('user'));
 
+        // Update Discussion Count dynamically
+        const countEl = document.getElementById('commentCount');
+        if (countEl) countEl.innerText = `(${comments.length})`;
+
         // Group comments by parent
         const mainComments = comments.filter(c => !c.parent_comment_id);
         const replies = comments.filter(c => c.parent_comment_id);
@@ -400,10 +404,10 @@ async function initCommentSystem(noteId, token) {
 
         return `
             <div class="comment-card ${isReply ? 'reply' : ''}" id="comment-${c.comment_id}">
-                <div class="comment-avatar">👤</div>
+                <div class="comment-avatar" style="cursor: pointer;" onclick="navigateToUserProfile(${c.user_id})">👤</div>
                 <div class="comment-content">
                     <div class="comment-meta">
-                        <span class="comment-user">${c.user_name}</span>
+                        <span class="comment-user" style="cursor: pointer; text-decoration: none;" onclick="navigateToUserProfile(${c.user_id})">${c.user_name}</span>
                         <span class="comment-time">${timeAgo}</span>
                         ${c.updated_at !== c.created_at ? '<span class="comment-time">(edited)</span>' : ''}
                     </div>
@@ -473,11 +477,11 @@ async function initCommentSystem(noteId, token) {
                 mainInput.value = '';
                 await fetchComments();
             } else {
-                alert(result.message || "Failed to post comment");
+                showToast(result.message || "Failed to post comment");
             }
         } catch (err) {
             console.error("Post Comment Error:", err);
-            alert("Error: " + err.message + "\nCheck console for details.");
+            showToast("Error: " + err.message);
         } finally {
             postBtn.disabled = false;
         }
@@ -520,11 +524,11 @@ async function postReply(parentCommentId, noteId) {
         if (response.ok) {
             window.location.reload();
         } else {
-            alert(result.message || "Failed to post reply");
+            showToast(result.message || "Failed to post reply");
         }
     } catch (err) {
         console.error("Reply error:", err);
-        alert("Error connecting to server.");
+        showToast("Error connecting to server.");
     }
 }
 
@@ -576,17 +580,22 @@ async function saveEdit(commentId, noteId) {
 }
 
 async function deleteComment(commentId, noteId) {
-    if (!confirm("Are you sure you want to delete this comment?")) return;
-    const token = localStorage.getItem('token');
-    try {
-        const response = await fetch(`/api/comments/comments/${commentId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) window.location.reload();
-    } catch (err) {
-        console.error("Delete error:", err);
-    }
+    showConfirm("Are you sure you want to delete this comment?", async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/comments/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                showToast("Comment deleted 🗑️");
+                setTimeout(() => window.location.reload(), 1000);
+            }
+        } catch (err) {
+            console.error("Delete error:", err);
+            showToast("Failed to delete comment");
+        }
+    });
 }
 
 function formatTimeAgo(date) {
@@ -690,11 +699,11 @@ function attachDetailsEventListeners(noteId, initialUserRating, noteData) {
                         const status = document.getElementById('ratingStatus');
                         if (status) status.innerText = `Your rating: ${rating}`;
                     } else {
-                        alert(data.message || 'Error submitting rating');
+                        showToast(data.message || 'Error submitting rating');
                     }
                 } catch (err) {
                     console.error('Rating Error:', err);
-                    alert('Failed to submit rating');
+                    showToast('Failed to submit rating');
                 }
             });
 
@@ -752,11 +761,11 @@ function attachDetailsEventListeners(noteId, initialUserRating, noteData) {
                         upvoteBtn.classList.remove('active-upvote');
                     }
                 } else {
-                    alert(data.message || 'Error upvoting note');
+                    showToast(data.message || 'Error upvoting note');
                 }
             } catch (err) {
                 console.error('Error:', err);
-                alert('Failed to upvote note');
+                showToast('Failed to upvote note');
             }
         });
     }
@@ -788,7 +797,7 @@ function attachDetailsEventListeners(noteId, initialUserRating, noteData) {
                     }
                     if (fileLink) window.open(fileLink, '_blank');
                 } else {
-                    alert(data.message || 'Error tracking download');
+                    showToast(data.message || 'Error tracking download');
                 }
             } catch (err) {
                 console.error('Download Error:', err);
@@ -862,16 +871,16 @@ function attachDetailsEventListeners(noteId, initialUserRating, noteData) {
                 }
 
                 if (response.ok && result.success) {
-                    alert(result.message);
-                    window.location.reload();
+                    showToast(result.message);
+                    setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    alert(result.message || "Failed to update note");
+                    showToast(result.message || "Failed to update note");
                     saveBtn.disabled = false;
                     saveBtn.innerText = "Save Changes";
                 }
             } catch (err) {
                 console.error("Update Error:", err);
-                alert("An error occurred while saving changes: " + err.message);
+                showToast("An error occurred while saving changes");
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Save Changes";
             }
@@ -897,7 +906,7 @@ async function showUpvotersModal(noteId, token) {
         });
 
         if (!response.ok) {
-            alert('You can only view upvoters for your own notes');
+            showToast('You can only view upvoters for your own notes');
             return;
         }
 
@@ -929,7 +938,7 @@ async function showUpvotersModal(noteId, token) {
         document.getElementById('upvotersModal').classList.add('active');
     } catch (err) {
         console.error('Error fetching upvoters:', err);
-        alert('Failed to load upvoters');
+        showToast('Failed to load upvoters');
     }
 }
 

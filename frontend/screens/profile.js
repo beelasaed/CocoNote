@@ -547,26 +547,28 @@ function closeSocialModal() {
 }
 
 async function deleteNote(noteId) {
-    if (!confirm("Are you sure you want to delete this note? All versions and statistics will be permanently removed.")) return;
+    showConfirm("Are you sure you want to delete this note? All versions and statistics will be permanently removed.", async () => {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/notes/${noteId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-    const token = localStorage.getItem('token');
-    try {
-        const response = await fetch(`/api/notes/${noteId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            alert("Note deleted successfully!");
-            location.reload();
-        } else {
-            alert(data.message || "Failed to delete note");
+            const data = await response.json();
+            if (data.success) {
+                showToast("Note deleted successfully! 🗑️");
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast(data.message || "Failed to delete note");
+            }
+        } catch (err) {
+            console.error("Delete note error:", err);
+            showToast("An error occurred while deleting the note");
         }
-    } catch (err) {
-        console.error("Delete note error:", err);
-        alert("An error occurred while deleting the note");
-    }
+    });
 }
 
 // Handle delete button via delegation

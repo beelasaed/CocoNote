@@ -10,9 +10,14 @@
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="../assets/css/notifications.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         body {
@@ -450,6 +455,13 @@
             font-size: 1.2rem;
             border: 1px solid rgba(215, 174, 108, 0.2);
             flex-shrink: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .comment-avatar:hover {
+            transform: scale(1.1);
+            border-color: var(--coco-gold);
+            box-shadow: 0 4px 12px rgba(212, 163, 115, 0.2);
         }
 
         .comment-content {
@@ -467,6 +479,12 @@
             font-weight: 700;
             color: var(--coco-earth);
             font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .comment-user:hover {
+            color: var(--coco-gold);
+            text-decoration: underline;
         }
 
         .comment-time {
