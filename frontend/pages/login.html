@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>CocoNote - Login</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/login.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body class="login-body">
     <div class="auth-card animate-up">
         <h1 class="brand-title">🥥 CocoNote</h1>
         <h2 class="welcome-text">Welcome Back</h2>
         <p class="subtitle">Login to access your notes</p>
 
-        <p id="errorMsg" style="color: #e74c3c; text-align: center; display: none; margin-bottom: 1rem; font-weight: bold;"></p>
+        <p id="errorMsg"
+            style="color: #e74c3c; text-align: center; display: none; margin-bottom: 1rem; font-weight: bold;"></p>
 
         <form id="loginForm">
             <div class="form-group">
@@ -24,7 +28,7 @@
                 <input type="password" id="password" placeholder="••••••••" required>
             </div>
             <div class="forgot-link">
-                <a href="#" class="link-gold">Forgot Password?</a>
+                <a href="forgot-password.html" class="link-gold">Forgot Password?</a>
             </div>
             <button type="submit" class="auth-btn">Login</button>
         </form>
@@ -32,8 +36,14 @@
         <p class="subtitle" style="margin-top: 2rem;">
             Don't have an account? <a href="register.html" class="link-gold">Register here</a>
         </p>
+
+        <div style="margin-top: 2rem; border-top: 1px solid rgba(215, 174, 108, 0.2); padding-top: 2rem;">
+            <p class="subtitle" style="margin-bottom: 1rem;">Or sign in with</p>
+            <div id="googleBtn" style="display: flex; justify-content: center;"></div>
+        </div>
     </div>
-    
+
     <script src="../screens/login.js"></script>
 </body>
+
 </html>

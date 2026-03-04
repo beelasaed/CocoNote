@@ -28,9 +28,9 @@ CREATE TABLE valid_student_ids (
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    student_id VARCHAR(20) UNIQUE NOT NULL REFERENCES valid_student_ids(student_id),
+    student_id VARCHAR(20) UNIQUE REFERENCES valid_student_ids(student_id),
     email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255),
     batch INT,
     department_id INT REFERENCES departments(department_id),
     bio TEXT,

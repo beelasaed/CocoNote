@@ -8,7 +8,7 @@ function showToast(message, linkUrl = null, linkText = 'Open', duration = 3000, 
     toast.className = 'toast-notification';
 
     let content = `<span class="toast-msg">${message}</span>`;
-    if (linkUrl) content += `<a href="${linkUrl}" class="toast-btn">${linkText}</a>`;
+    if (linkUrl) content += `<a href="${linkUrl}" target="_blank" class="toast-btn">${linkText}</a>`;
 
     toast.innerHTML = content;
     document.body.appendChild(toast);

@@ -33,6 +33,10 @@ const upload = multer({
 
 router.post('/register', authController.registerUser);
 router.post('/login', authController.loginUser);
+router.post('/google-auth', authController.googleAuth);
+router.post('/google-register', authController.googleRegister);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
 router.get('/departments', authController.getDepartments);
 router.get('/me', protect, authController.getCurrentUser);
 

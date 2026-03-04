@@ -313,7 +313,7 @@ function attachEventListeners() {
             if (typeof showToast === 'function') {
                 // We grab the file link so the toast can let them open it again if they want
                 const fileLink = btn.getAttribute('href');
-                showToast("Download ready!", fileLink, "Open File", 6000);
+                showToast("Downloaded -view pdf", fileLink, "View", 6000);
             }
 
             const noteId = btn.dataset.noteId;

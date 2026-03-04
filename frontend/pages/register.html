@@ -6,6 +6,7 @@
     <title>CocoNote - Create Account</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/register.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body class="register-body">
@@ -30,6 +31,12 @@
             </div>
 
             <div class="form-group">
+                <label>Batch</label>
+                <input type="text" id="batch_display" placeholder="Auto-filled from ID" readonly
+                    style="background-color: #f0f0f0; cursor: not-allowed; border: 1px solid #ccc;">
+            </div>
+
+            <div class="form-group">
                 <label>Department</label>
                 <select id="department" required
                     style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.75rem; background: var(--coco-cream, #fcfcfc); box-sizing: border-box;">
@@ -37,26 +44,6 @@
                 </select>
             </div>
 
-            <div class="form-group">
-                <label>Batch</label>
-                <select id="batch" required
-                    style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.75rem; background: var(--coco-cream, #fcfcfc); box-sizing: border-box;">
-                    <option value="" disabled selected>Select Batch</option>
-                    <option value="12">Batch 12</option>
-                    <option value="13">Batch 13</option>
-                    <option value="14">Batch 14</option>
-                    <option value="15">Batch 15</option>
-                    <option value="16">Batch 16</option>
-                    <option value="17">Batch 17</option>
-                    <option value="18">Batch 18</option>
-                    <option value="19">Batch 19</option>
-                    <option value="20">Batch 20</option>
-                    <option value="21">Batch 21</option>
-                    <option value="22">Batch 22</option>
-                    <option value="23">Batch 23</option>
-                    <option value="24">Batch 24</option>
-                </select>
-            </div>
 
             <div class="form-group">
                 <label>IUT Email</label>
@@ -76,6 +63,11 @@
 
             <button type="submit" class="auth-btn" style="margin-top: 1rem;">Register</button>
         </form>
+
+        <div style="margin-top: 2rem; border-top: 1px solid rgba(215, 174, 108, 0.2); padding-top: 2rem;">
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 1rem;">Or sign up with</p>
+            <div id="googleBtn" style="display: flex; justify-content: center;"></div>
+        </div>
 
         <p style="text-align: center; color: var(--text-muted); margin-top: 1.5rem;">
             Already have an account? <a href="login.html" class="link-gold">Login here</a>
