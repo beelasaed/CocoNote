@@ -9,20 +9,11 @@ CREATE SCHEMA public;
 \echo '... Creating Tables (Schema)'
 \i schema.sql
 
-\echo '... Creating Notifications Table'
-\i notifications.sql
-
-\echo '... Adding Social Features'
-\i social_features.sql
-
-\echo '... Adding Recommender Functions'
-\i recommender.sql
+\echo '... Creating Indexes'
+\i indexes.sql
 
 \echo '...  Adding Functions'
 \i functions.sql
-
-\echo '...  Adding Procedures'
-\i procedures.sql
 
 \echo '... Adding Triggers'
 \i triggers.sql

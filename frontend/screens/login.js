@@ -36,13 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Step 0: Client-side Domain Check
             if (!email.endsWith('@iut-dhaka.edu')) {
-                errorMsg.textContent = '❌ Only @iut-dhaka.edu emails are allowed.';
-                errorMsg.style.display = 'block';
+                errorMsg.textContent = '⚠️ Please use your IUT Dhaka email (@iut-dhaka.edu)';
+                errorMsg.classList.add('show');
                 return;
             }
 
             // Reset UI
-            errorMsg.style.display = 'none';
+            errorMsg.classList.remove('show');
             submitBtn.textContent = 'Logging in...';
             submitBtn.disabled = true;
 
@@ -70,15 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = 'dashboard.html';
                 } else {
                     // 4. ERROR: Show message (e.g., "Invalid Password")
-                    errorMsg.textContent = `❌ ${data.message}`;
-                    errorMsg.style.display = 'block';
+                    errorMsg.textContent = `⚠️ ${data.message}`;
+                    errorMsg.classList.add('show');
                     submitBtn.textContent = 'Login';
                     submitBtn.disabled = false;
                 }
             } catch (error) {
                 console.error("Login Error:", error);
-                errorMsg.textContent = '❌ Server connection failed. Is backend running?';
-                errorMsg.style.display = 'block';
+                errorMsg.textContent = '⚠️ Server connection failed. Please try again.';
+                errorMsg.classList.add('show');
                 submitBtn.textContent = 'Login';
                 submitBtn.disabled = false;
             }
@@ -114,12 +114,12 @@ async function handleGoogleResponse(response) {
                 window.location.href = 'dashboard.html';
             }
         } else {
-            errorMsg.textContent = `❌ ${data.message || 'Google Login failed'}`;
-            errorMsg.style.display = 'block';
+            errorMsg.textContent = `⚠️ ${data.message || 'Google login failed. Please try again.'}`;
+            errorMsg.classList.add('show');
         }
     } catch (err) {
         console.error("Google Auth Error:", err);
-        errorMsg.textContent = '❌ Google Auth connection failed.';
-        errorMsg.style.display = 'block';
+        errorMsg.textContent = '⚠️ Google authentication failed. Please try again.';
+        errorMsg.classList.add('show');
     }
 }

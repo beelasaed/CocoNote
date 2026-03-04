@@ -12,15 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Client-side Domain Check
             if (!email.endsWith('@iut-dhaka.edu')) {
-                messageBox.textContent = '❌ Only @iut-dhaka.edu emails are allowed.';
-                messageBox.style.color = 'red';
-                messageBox.style.display = 'block';
+                showMessage('⚠️ Please use your IUT Dhaka email (@iut-dhaka.edu)', 'error');
                 return;
             }
 
-            messageBox.textContent = 'Sending...';
-            messageBox.style.color = 'blue';
-            messageBox.style.display = 'block';
+            showMessage('Sending reset token...', 'warning');
 
             try {
                 const response = await fetch(`${API_URL}/forgot-password`, {
@@ -32,8 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    messageBox.style.color = 'green';
-                    messageBox.textContent = '✅ Reset token sent! Check server console.';
+                    showMessage('✓ Reset token sent! Redirecting...', 'success');
 
                     // Save email in session storage for the reset page
                     sessionStorage.setItem('resetEmail', email);
@@ -43,14 +38,37 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.location.href = 'reset-password.html';
                     }, 2000);
                 } else {
-                    messageBox.style.color = 'red';
-                    messageBox.textContent = `❌ ${data.message}`;
+                    showMessage(`⚠️ ${data.message}`, 'error');
                 }
             } catch (error) {
                 console.error("Forgot Password Error:", error);
-                messageBox.style.color = 'red';
-                messageBox.textContent = '❌ Server connection failed.';
+                showMessage('⚠️ Server connection failed. Please try again.', 'error');
             }
         });
     }
 });
+
+function showMessage(text, type = 'error') {
+    const messageBox = document.getElementById('message');
+    messageBox.textContent = text;
+    
+    // Remove all alert type classes
+    messageBox.classList.remove('alert-error', 'alert-warning', 'alert-success');
+    
+    // Add the appropriate class
+    switch(type) {
+        case 'error':
+            messageBox.classList.add('alert-error');
+            break;
+        case 'warning':
+            messageBox.classList.add('alert-warning');
+            break;
+        case 'success':
+            messageBox.classList.add('alert-success');
+            break;
+        default:
+            messageBox.classList.add('alert-error');
+    }
+    
+    messageBox.classList.add('show');
+}

@@ -31,11 +31,13 @@ CREATE TABLE users (
     student_id VARCHAR(20) UNIQUE REFERENCES valid_student_ids(student_id),
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255),
-    batch INT,
+    batch INT CHECK (batch >= 12 AND batch <= 24),
     department_id INT REFERENCES departments(department_id),
     bio TEXT,
     profile_picture VARCHAR(255),
     total_points INT DEFAULT 0,
+    reset_token VARCHAR(255),
+    reset_token_expiry TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -52,7 +54,7 @@ CREATE TABLE note (
     
   
     description TEXT,
-    batch VARCHAR(10),
+    batch VARCHAR(10) CHECK (batch::INTEGER >= 12 AND batch::INTEGER <= 24),
     department_id INT REFERENCES departments(department_id),
     
     course_id INT REFERENCES course(course_id),
@@ -154,4 +156,13 @@ CREATE TABLE notification (
     action_type VARCHAR(50) NOT NULL, -- 'upvote', 'download', 'comment', 'comment_reply'
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS stars (
+    star_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    target_id INT NOT NULL, -- user_id or course_id
+    target_type VARCHAR(20) NOT NULL, -- 'user' or 'course'
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE (user_id, target_id, target_type)
 );

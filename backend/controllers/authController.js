@@ -8,6 +8,23 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+// --- PASSWORD VALIDATION ---
+function validatePassword(password) {
+    const errors = [];
+    
+    if (!password || password.length < 5) {
+        errors.push('Password must be at least 5 characters long');
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+        errors.push('Password must contain at least one letter');
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        errors.push('Password must contain at least one special character');
+    }
+    
+    return errors;
+}
+
 // --- REGISTER USER ---
 exports.registerUser = async (req, res) => {
     const { name, student_id, email, department_id, password } = req.body;
@@ -31,6 +48,11 @@ exports.registerUser = async (req, res) => {
             return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
         }
 
+        // Validate password
+        const passwordErrors = validatePassword(password);
+        if (passwordErrors.length > 0) {
+            return res.status(400).json({ message: passwordErrors.join(' ') });
+        }
 
         const idCheck = await pool.query('SELECT * FROM valid_student_ids WHERE student_id = $1', [student_id]);
         if (idCheck.rows.length === 0) {
@@ -87,6 +109,10 @@ exports.loginUser = async (req, res) => {
 
         const user = userResult.rows[0];
 
+        // Check if password exists (user may have signed up with Google)
+        if (!user.password) {
+            return res.status(401).json({ message: "This account was created with Google Sign-up. Please use Google to login." });
+        }
 
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
@@ -150,16 +176,16 @@ exports.getCurrentUser = async (req, res) => {
 
         const user = userResult.rows[0];
 
-        // Get user statistics
+        // Get user statistics from optimized view
         const statsResult = await pool.query(`
             SELECT 
-                COUNT(DISTINCT n.note_id) AS notes_uploaded,
-                COALESCE(SUM(n.downloads), 0) AS total_downloads,
-                COALESCE(SUM(n.upvotes), 0) AS total_upvotes,
-                (SELECT COUNT(*) FROM stars WHERE target_id = $1 AND target_type = 'user') AS follower_count,
-                (SELECT COUNT(*) FROM stars WHERE user_id = $1 AND target_type = 'user') AS following_count
-            FROM note n
-            WHERE n.uploader_id = $1
+                notes_uploaded,
+                total_downloads,
+                total_upvotes,
+                follower_count,
+                following_count
+            FROM user_stats
+            WHERE user_id = $1
         `, [user_id]);
 
         const stats = statsResult.rows[0];
@@ -299,16 +325,16 @@ exports.getPublicUserProfile = async (req, res) => {
 
         const user = userResult.rows[0];
 
-        // Get user statistics
+        // Get user statistics from optimized view
         const statsResult = await pool.query(`
             SELECT 
-                COUNT(DISTINCT n.note_id) AS notes_uploaded,
-                COALESCE(SUM(n.downloads), 0) AS total_downloads,
-                COALESCE(SUM(n.upvotes), 0) AS total_upvotes,
-                (SELECT COUNT(*) FROM stars WHERE target_id = $1 AND target_type = 'user') AS follower_count,
-                (SELECT COUNT(*) FROM stars WHERE user_id = $1 AND target_type = 'user') AS following_count
-            FROM note n
-            WHERE n.uploader_id = $1
+                notes_uploaded,
+                total_downloads,
+                total_upvotes,
+                follower_count,
+                following_count
+            FROM user_stats
+            WHERE user_id = $1
         `, [user_id]);
 
         const stats = statsResult.rows[0];
@@ -646,6 +672,12 @@ exports.resetPassword = async (req, res) => {
 
         if (userResult.rows.length === 0) {
             return res.status(400).json({ message: "Invalid or expired reset token." });
+        }
+
+        // Validate new password
+        const passwordErrors = validatePassword(newPassword);
+        if (passwordErrors.length > 0) {
+            return res.status(400).json({ message: passwordErrors.join(' ') });
         }
 
         const user = userResult.rows[0];

@@ -59,12 +59,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const batchNum = parseInt(batch);
                 if (batchNum >= 12 && batchNum <= 24) {
                     batchDisplay.value = batch;
-                    messageBox.style.display = 'none';
+                    messageBox.classList.remove('show');
                 } else {
                     batchDisplay.value = '';
-                    messageBox.style.display = 'block';
-                    messageBox.style.color = 'red';
-                    messageBox.textContent = '❌ Invalid Student ID. Batch must be between 12 and 24.';
+                    showMessage('⚠️ Invalid Student ID. Batch must be between 12 and 24.', 'error');
                 }
             } else {
                 batchDisplay.value = '';
@@ -93,13 +91,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Validation
             if (!/^\d{9}$/.test(studentId)) {
-                showMessage('❌ Invalid Student ID. It must be 9 digits long.', 'red');
+                showMessage('⚠️ Invalid Student ID. It must be 9 digits long.', 'error');
                 return;
             }
 
             const batchValue = batchDisplay ? batchDisplay.value : '';
             if (!batchValue) {
-                showMessage('❌ Valid Student ID required to determine batch.', 'red');
+                showMessage('⚠️ Valid Student ID required to determine batch.', 'error');
                 return;
             }
 
@@ -122,7 +120,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            showMessage(isGoogleMode ? 'Finalizing registration...' : 'Creating account...', 'blue');
+            if (!isGoogleMode) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                // Validate password
+                const passwordError = validatePassword(password);
+                if (passwordError) {
+                    showMessage(passwordError, 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showMessage('⚠️ Passwords do not match.', 'error');
+                    return;
+                }
+                
+                formData.password = password;
+                formData.confirmPassword = confirmPassword;
+            }
+
+            showMessage(isGoogleMode ? 'Setting up your account...' : 'Creating your account...', 'warning');
 
             try {
                 const endpoint = isGoogleMode ? 'google-register' : 'register';
@@ -135,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage('✅ Success! Redirecting...', 'green');
+                    showMessage('✓ Welcome to CocoNote! Redirecting...', 'success');
                     if (isGoogleMode) {
                         localStorage.removeItem('tempGoogleUser');
                         localStorage.setItem('token', data.token);
@@ -145,10 +163,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         setTimeout(() => window.location.href = 'login.html', 2000);
                     }
                 } else {
-                    showMessage(`❌ ${data.message}`, 'red');
+                    showMessage(`⚠️ ${data.message}`, 'error');
                 }
             } catch (error) {
-                showMessage('❌ Server Error. Is the backend running?', 'red');
+                showMessage('⚠️ Server error. Please try again.', 'error');
             }
         });
     }
@@ -158,11 +176,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // --- UTILS ---
 
-function showMessage(text, color) {
+function showMessage(text, type = 'error') {
     const messageBox = document.getElementById('message');
-    messageBox.style.display = 'block';
-    messageBox.style.color = color;
     messageBox.textContent = text;
+    
+    // Remove all alert type classes
+    messageBox.classList.remove('alert-error', 'alert-warning', 'alert-success');
+    
+    // Add the appropriate class
+    switch(type) {
+        case 'error':
+            messageBox.classList.add('alert-error');
+            break;
+        case 'warning':
+            messageBox.classList.add('alert-warning');
+            break;
+        case 'success':
+            messageBox.classList.add('alert-success');
+            break;
+        default:
+            messageBox.classList.add('alert-error');
+    }
+    
+    messageBox.classList.add('show');
 }
 
 function activateGoogleMode(user) {
@@ -193,7 +229,7 @@ function activateGoogleMode(user) {
     if (authBtn) authBtn.textContent = 'Finish Registration';
     if (googleSection) googleSection.style.display = 'none'; // Hide the button after use
 
-    showMessage('✅ Google Account verified! Complete your ID and Dept.', 'green');
+    showMessage('Google account verified! Complete your ID and Department.', 'success');
 }
 
 async function handleGoogleResponse(response) {
@@ -213,19 +249,32 @@ async function handleGoogleResponse(response) {
                 activateGoogleMode(data.googleData);
             } else {
                 // "should not log me in immediately" - per user request
-                showMessage('💡 You already have an account! Please go to the Login page to continue.', 'orange');
+                showMessage('You already have an account! Please go to the Login page to continue.', 'warning');
                 // Opt-in: Add a button to go to login
                 const loginLink = document.createElement('a');
                 loginLink.href = 'login.html';
                 loginLink.className = 'link-gold';
                 loginLink.textContent = ' Go to Login page';
-                document.getElementById('message').appendChild(loginLink);
+                setTimeout(() => document.getElementById('message').appendChild(loginLink), 100);
             }
         } else {
-            showMessage(`❌ ${data.message || 'Google Auth failed'}`, 'red');
+            showMessage(`⚠️ ${data.message || 'Google authentication failed. Please try again.'}`, 'error');
         }
     } catch (err) {
         console.error("Google Auth Error:", err);
-        showMessage('❌ Google Auth connection failed.', 'red');
+        showMessage('⚠️ Google authentication failed. Please try again.', 'error');
     }
+}
+
+function validatePassword(password) {
+    if (!password || password.length < 5) {
+        return '⚠️ Password must be at least 5 characters long';
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+        return '⚠️ Password must contain at least one letter';
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        return '⚠️ Password must contain at least one special character';
+    }
+    return null;
 }

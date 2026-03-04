@@ -51,7 +51,7 @@ exports.uploadNote = async (req, res) => {
             fs.unlinkSync(req.file.path);
 
             if (duplicateCheck.rows[0].uploader_id === uploader_id) {
-                return res.status(400).json({ message: 'this note is already uploaded by u' });
+                return res.status(400).json({ message: 'This note is already uploaded by you.' });
             } else {
                 return res.status(400).json({ message: 'Someone else already uploaded this exact file.' });
             }
@@ -105,36 +105,26 @@ exports.getUserNotes = async (req, res) => {
     try {
         const user_id = req.user.user_id;
 
-
         const result = await pool.query(`
             SELECT 
-                n.note_id,
-                n.title,
-                n.description,
-                n.batch,
-                n.upvotes,
-                n.downloads,
-                COALESCE(nr.average_rating, 0) AS average_rating,
-                COALESCE(nr.rating_count, 0) AS rating_count,
-                n.created_at,
-                c.name AS category,
-                co.code AS course_code,
-                co.name AS course,
-                d.name AS department,
-                u.name AS uploader,
-                n.uploader_id
-            FROM note n
-            LEFT JOIN category c ON n.category_id = c.category_id
-            LEFT JOIN course co ON n.course_id = co.course_id
-            LEFT JOIN departments d ON n.department_id = d.department_id
-            LEFT JOIN users u ON n.uploader_id = u.user_id
-            LEFT JOIN (
-                SELECT note_id, AVG(rating)::numeric(3,1) AS average_rating, COUNT(*) AS rating_count
-                FROM note_rating
-                GROUP BY note_id
-            ) nr ON n.note_id = nr.note_id
-            WHERE n.uploader_id = $1
-            ORDER BY n.created_at DESC
+                note_id,
+                title,
+                description,
+                batch,
+                upvotes,
+                downloads,
+                average_rating,
+                rating_count,
+                created_at,
+                category,
+                course_code,
+                course,
+                department,
+                uploader,
+                uploader_id
+            FROM note_with_details
+            WHERE uploader_id = $1
+            ORDER BY created_at DESC
         `, [user_id]);
 
         res.json(result.rows);
@@ -184,33 +174,24 @@ exports.getNotesByUser = async (req, res) => {
 
         const result = await pool.query(`
             SELECT 
-                n.note_id,
-                n.title,
-                n.description,
-                n.batch,
-                n.upvotes,
-                n.downloads,
-                COALESCE(nr.average_rating, 0) AS average_rating,
-                COALESCE(nr.rating_count, 0) AS rating_count,
-                n.created_at,
-                c.name AS category,
-                co.code AS course_code,
-                co.name AS course,
-                d.name AS department,
-                u.name AS uploader,
-                n.uploader_id
-            FROM note n
-            LEFT JOIN category c ON n.category_id = c.category_id
-            LEFT JOIN course co ON n.course_id = co.course_id
-            LEFT JOIN departments d ON n.department_id = d.department_id
-            LEFT JOIN users u ON n.uploader_id = u.user_id
-            LEFT JOIN (
-                SELECT note_id, AVG(rating)::numeric(3,1) AS average_rating, COUNT(*) AS rating_count
-                FROM note_rating
-                GROUP BY note_id
-            ) nr ON n.note_id = nr.note_id
-            WHERE n.uploader_id = $1
-            ORDER BY n.created_at DESC
+                note_id,
+                title,
+                description,
+                batch,
+                upvotes,
+                downloads,
+                average_rating,
+                rating_count,
+                created_at,
+                category,
+                course_code,
+                course,
+                department,
+                uploader,
+                uploader_id
+            FROM note_with_details
+            WHERE uploader_id = $1
+            ORDER BY created_at DESC
         `, [user_id]);
 
         res.json(result.rows);
@@ -228,7 +209,7 @@ exports.getNoteById = async (req, res) => {
 
         if (!note_id) return res.status(400).json({ message: "note_id is required" });
 
-        // Fetch the note with all related information
+        // Fetch the note with all related information using optimized views
         const result = await pool.query(`
             SELECT 
                 n.note_id,
@@ -248,8 +229,8 @@ exports.getNoteById = async (req, res) => {
                 u.user_id AS uploader_id,
                 u.student_id,
                 CASE WHEN EXISTS(SELECT 1 FROM upvote WHERE upvote.note_id = n.note_id AND upvote.user_id = $2) THEN true ELSE false END AS is_upvoted,
-                COALESCE((SELECT AVG(rating)::numeric(3,1) FROM note_rating WHERE note_id = n.note_id), 0) AS average_rating,
-                COALESCE((SELECT COUNT(*) FROM note_rating WHERE note_id = n.note_id), 0) AS rating_count,
+                COALESCE(nrs.average_rating, 0) AS average_rating,
+                COALESCE(nrs.rating_count, 0) AS rating_count,
                 (SELECT rating FROM note_rating WHERE note_id = n.note_id AND user_id = $2) AS user_rating,
                 COALESCE((SELECT COUNT(*) FROM comment WHERE note_id = n.note_id), 0) AS comment_count,
                 CASE WHEN (SELECT COUNT(*) FROM comment WHERE note_id = n.note_id) >= 5 THEN true ELSE false END AS is_highly_discussed
@@ -258,6 +239,7 @@ exports.getNoteById = async (req, res) => {
             LEFT JOIN course co ON n.course_id = co.course_id
             LEFT JOIN departments d ON n.department_id = d.department_id
             LEFT JOIN users u ON n.uploader_id = u.user_id
+            LEFT JOIN note_rating_stats nrs ON n.note_id = nrs.note_id
             WHERE n.note_id = $1
         `, [note_id, user_id]);
 
@@ -547,33 +529,24 @@ exports.getSavedNotes = async (req, res) => {
 
         const result = await pool.query(`
             SELECT 
-                n.note_id,
-                n.title,
-                n.description,
-                n.batch,
-                n.upvotes,
-                n.downloads,
-                COALESCE(nr.average_rating, 0) AS average_rating,
-                COALESCE(nr.rating_count, 0) AS rating_count,
-                n.created_at,
-                c.name AS category,
-                co.code AS course_code,
-                co.name AS course,
-                d.name AS department,
-                u.name AS uploader,
-                n.uploader_id,
+                nwd.note_id,
+                nwd.title,
+                nwd.description,
+                nwd.batch,
+                nwd.upvotes,
+                nwd.downloads,
+                nwd.average_rating,
+                nwd.rating_count,
+                nwd.created_at,
+                nwd.category,
+                nwd.course_code,
+                nwd.course,
+                nwd.department,
+                nwd.uploader,
+                nwd.uploader_id,
                 sn.saved_at
             FROM saved_note sn
-            INNER JOIN note n ON sn.note_id = n.note_id
-            LEFT JOIN category c ON n.category_id = c.category_id
-            LEFT JOIN course co ON n.course_id = co.course_id
-            LEFT JOIN departments d ON n.department_id = d.department_id
-            LEFT JOIN users u ON n.uploader_id = u.user_id
-            LEFT JOIN (
-                SELECT note_id, AVG(rating)::numeric(3,1) AS average_rating, COUNT(*) AS rating_count
-                FROM note_rating
-                GROUP BY note_id
-            ) nr ON n.note_id = nr.note_id
+            INNER JOIN note_with_details nwd ON sn.note_id = nwd.note_id
             WHERE sn.user_id = $1
             ORDER BY sn.saved_at DESC
         `, [user_id]);
