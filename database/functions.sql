@@ -32,11 +32,12 @@ BEGIN
         n.created_at,
         n.upvotes,
         n.downloads,
-        COALESCE((SELECT AVG(rating)::numeric(3,1) FROM note_rating nr WHERE nr.note_id = n.note_id), 0) AS average_rating,
-        COALESCE((SELECT COUNT(*) FROM note_rating nr WHERE nr.note_id = n.note_id), 0) AS rating_count
+        COALESCE(nrs.average_rating, 0) AS average_rating,
+        COALESCE(nrs.rating_count, 0) AS rating_count
     FROM note n
     JOIN users u ON n.uploader_id = u.user_id
     JOIN course c ON n.course_id = c.course_id
+    LEFT JOIN note_rating_stats nrs ON n.note_id = nrs.note_id
     WHERE 
         (_search_text IS NULL OR 
          n.title ILIKE '%' || _search_text || '%' OR 

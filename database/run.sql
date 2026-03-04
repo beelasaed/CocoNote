@@ -12,6 +12,9 @@ CREATE SCHEMA public;
 \echo '... Creating Notifications Table'
 \i notifications.sql
 
+\echo '... Adding Social Features'
+\i social_features.sql
+
 \echo '... Adding Recommender Functions'
 \i recommender.sql
 
