@@ -1,5 +1,27 @@
 const API_URL = window.location.hostname === "" ? 'http://localhost:3000/api/auth' : '/api/auth';
 
+function initGoogleButton(callback, buttonId = "googleBtn", text = "continue_with") {
+    const render = () => {
+        google.accounts.id.initialize({
+            client_id: "1089791815986-jje44qn5pteaj3ra4s27fs949r1dce29.apps.googleusercontent.com",
+            callback: callback
+        });
+        google.accounts.id.renderButton(
+            document.getElementById(buttonId),
+            { theme: "outline", size: "large", width: "100%", text: text }
+        );
+    };
+
+    if (window.google) {
+        render();
+    } else {
+        // Wait for script to load if not ready
+        window.addEventListener('load', () => {
+            if (window.google) render();
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const errorMsg = document.getElementById('errorMsg');
@@ -63,18 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Google Sign-In Initialization
-    if (window.google) {
-        google.accounts.id.initialize({
-            client_id: "1089791815986-jje44qn5pteaj3ra4s27fs949r1dce29.apps.googleusercontent.com",
-            callback: handleGoogleResponse
-        });
-
-        google.accounts.id.renderButton(
-            document.getElementById("googleBtn"),
-            { theme: "outline", size: "large", width: "100%", text: "continue_with" }
-        );
-    }
+    // Initialize Google Button
+    initGoogleButton(handleGoogleResponse);
 });
 
 async function handleGoogleResponse(response) {

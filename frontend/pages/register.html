@@ -6,6 +6,7 @@
     <title>CocoNote - Create Account</title>
     <link rel="stylesheet" href="../assets/css/variable.css">
     <link rel="stylesheet" href="../assets/css/register.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body class="register-body">
@@ -62,6 +63,11 @@
 
             <button type="submit" class="auth-btn" style="margin-top: 1rem;">Register</button>
         </form>
+
+        <div style="margin-top: 2rem; border-top: 1px solid rgba(215, 174, 108, 0.2); padding-top: 2rem;">
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 1rem;">Or sign up with</p>
+            <div id="googleBtn" style="display: flex; justify-content: center;"></div>
+        </div>
 
         <p style="text-align: center; color: var(--text-muted); margin-top: 1.5rem;">
             Already have an account? <a href="login.html" class="link-gold">Login here</a>
