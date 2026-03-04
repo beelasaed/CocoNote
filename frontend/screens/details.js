@@ -831,7 +831,9 @@ function attachDetailsEventListeners(noteId, initialUserRating, noteData) {
                         const currentDownloads = parseInt(downloadCountSpan.innerText);
                         downloadCountSpan.innerText = currentDownloads + 1;
                     }
-                    if (fileLink) window.open(fileLink, '_blank');
+                    if (typeof showToast === 'function') {
+                        showToast("Downloaded -view pdf", fileLink, "View", 6000);
+                    }
                 } else {
                     showToast(data.message || 'Error tracking download');
                 }

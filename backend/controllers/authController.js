@@ -1,25 +1,34 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const crypto = require('crypto');
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // --- REGISTER USER ---
 exports.registerUser = async (req, res) => {
-    const { name, student_id, email, department_id, batch, password } = req.body;
+    const { name, student_id, email, department_id, password } = req.body;
 
     try {
         if (!JWT_SECRET) {
             return res.status(500).json({ message: 'Server auth configuration error' });
         }
 
-        if (!email.endsWith('@iut-dhaka.edu')) {
-            return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
+        // Validate Student ID: 9 digits, numeric
+        if (!/^\d{9}$/.test(student_id)) {
+            return res.status(400).json({ message: "Invalid Student ID format. It must be 9 digits long." });
         }
 
-        const batchNum = parseInt(batch);
-        if (isNaN(batchNum) || batchNum < 12 || batchNum > 24) {
-            return res.status(400).json({ message: "Invalid Batch. Only batches 12 to 24 are accepted." });
+        const batch = parseInt(student_id.substring(0, 2));
+        if (batch < 12 || batch > 24) {
+            return res.status(400).json({ message: "Invalid Student ID. Batch extracted must be between 12 and 24." });
+        }
+
+        if (!email.endsWith('@iut-dhaka.edu')) {
+            return res.status(400).json({ message: "Only @iut-dhaka.edu emails are allowed." });
         }
 
 
@@ -507,5 +516,151 @@ exports.deleteUser = async (req, res) => {
     } catch (err) {
         console.error("Error deleting user:", err);
         res.status(500).json({ message: "Server Error deleting account" });
+    }
+};
+
+// --- GOOGLE AUTH ---
+exports.googleAuth = async (req, res) => {
+    const { credential } = req.body;
+    console.log("DEBUG: googleAuth called");
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name } = payload;
+        console.log(`DEBUG: googleAuth verified email: ${email}`);
+
+        // Check if user exists
+        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+
+        if (userResult.rows.length > 0) {
+            const user = userResult.rows[0];
+            const token = jwt.sign({ user_id: user.user_id }, JWT_SECRET, { expiresIn: '1h' });
+
+            return res.json({
+                success: true,
+                isNewUser: false,
+                token,
+                user: { ...user, role: 'student' }
+            });
+        } else {
+            // New User: Send back info for supplementary registration
+            return res.json({
+                success: true,
+                isNewUser: true,
+                googleData: { email, name }
+            });
+        }
+
+    } catch (err) {
+        console.error("Google Auth Error Details:", err);
+        res.status(500).json({ message: "Google Authentication failed" });
+    }
+};
+
+// --- GOOGLE SUPPLEMENTARY REGISTER ---
+exports.googleRegister = async (req, res) => {
+    console.log("DEBUG: googleRegister req.body:", req.body);
+    const { name, email, student_id, department_id } = req.body;
+
+    try {
+        // Validation
+        if (!/^\d{9}$/.test(student_id)) {
+            return res.status(400).json({ message: "Invalid Student ID format." });
+        }
+
+        const batch = parseInt(student_id.substring(0, 2));
+        console.log(`DEBUG: Registering user: ${email}, ID: ${student_id}, Dept: ${department_id}, Batch: ${batch}`);
+
+        const idCheck = await pool.query('SELECT * FROM valid_student_ids WHERE student_id = $1', [student_id]);
+        if (idCheck.rows.length === 0) {
+            return res.status(401).json({ message: "Student ID not found in official records." });
+        }
+
+        // Create User (No password for Google users)
+        const sql = `INSERT INTO users (name, student_id, email, password, department_id, batch) 
+                     VALUES ($1, $2, $3, NULL, $4, $5) RETURNING *`;
+        const params = [name, student_id, email, department_id, batch];
+
+        console.log("DEBUG: Executing SQL:", sql, "with params:", params);
+
+        const newUser = await pool.query(sql, params);
+
+        const token = jwt.sign({ user_id: newUser.rows[0].user_id }, JWT_SECRET, { expiresIn: '1h' });
+        res.json({ message: "Registration Successful!", token, user: newUser.rows[0] });
+
+    } catch (err) {
+        console.error("Google Registration Full Error:", err);
+        res.status(500).json({ message: "Server Error during registration" });
+    }
+};
+
+// --- FORGOT PASSWORD ---
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: "User not found with this email." });
+        }
+
+        const user = userResult.rows[0];
+
+        // Generate a 6-digit OTP/token
+        const resetToken = crypto.randomInt(100000, 999999).toString();
+        const resetExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+        await pool.query(
+            'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE user_id = $3',
+            [resetToken, resetExpiry, user.user_id]
+        );
+
+        console.log(`____________________________________________________`);
+        console.log(`🔑 PASSWORD RESET REQUEST`);
+        console.log(`User: ${email}`);
+        console.log(`Token: ${resetToken}`);
+        console.log(`____________________________________________________`);
+
+        res.json({ message: "Reset token sent to your email (simulated in console)." });
+
+    } catch (err) {
+        console.error("Forgot Password Error:", err);
+        res.status(500).json({ message: "Server Error during forgot password flow" });
+    }
+};
+
+// --- RESET PASSWORD ---
+exports.resetPassword = async (req, res) => {
+    const { email, token, newPassword } = req.body;
+
+    try {
+        const userResult = await pool.query(
+            'SELECT * FROM users WHERE email = $1 AND reset_token = $2 AND reset_token_expiry > NOW()',
+            [email, token]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(400).json({ message: "Invalid or expired reset token." });
+        }
+
+        const user = userResult.rows[0];
+        const salt = await bcrypt.genSalt(10);
+        const hashedPass = await bcrypt.hash(newPassword, salt);
+
+        await pool.query(
+            'UPDATE users SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE user_id = $2',
+            [hashedPass, user.user_id]
+        );
+
+        res.json({ message: "Password updated successfully!" });
+
+    } catch (err) {
+        console.error("Reset Password Error:", err);
+        res.status(500).json({ message: "Server Error during password reset" });
     }
 };

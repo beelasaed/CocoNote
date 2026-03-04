@@ -40,9 +40,11 @@ BEGIN
             SELECT uploader_id INTO _user_id FROM note WHERE note_id = NEW.note_id;
             _points_change := 10; -- Note downloaded: +10 points
 
-            -- Create notification for uploader
-            INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
-            VALUES (_user_id, NEW.user_id, NEW.note_id, 'download');
+            -- Create notification for uploader (if not self-download)
+            IF _user_id != NEW.user_id THEN
+                INSERT INTO notification (recipient_user_id, actor_user_id, note_id, action_type)
+                VALUES (_user_id, NEW.user_id, NEW.note_id, 'download');
+            END IF;
         -- No deduction for deleting download history usually, but let's keep it additive mostly
         END IF;
     

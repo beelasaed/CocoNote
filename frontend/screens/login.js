@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api/auth';
+const API_URL = window.location.hostname === "" ? 'http://localhost:3000/api/auth' : '/api/auth';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
@@ -62,4 +62,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Google Sign-In Initialization
+    if (window.google) {
+        google.accounts.id.initialize({
+            client_id: "1089791815986-jje44qn5pteaj3ra4s27fs949r1dce29.apps.googleusercontent.com",
+            callback: handleGoogleResponse
+        });
+
+        google.accounts.id.renderButton(
+            document.getElementById("googleBtn"),
+            { theme: "outline", size: "large", width: "100%", text: "continue_with" }
+        );
+    }
 });
+
+async function handleGoogleResponse(response) {
+    console.log("DEBUG: frontend received Google response");
+    const errorMsg = document.getElementById('errorMsg');
+
+    try {
+        const res = await fetch(`${API_URL}/google-auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: response.credential })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            if (data.isNewUser) {
+                // Save google data and redirect to register with a flag
+                localStorage.setItem('tempGoogleUser', JSON.stringify(data.googleData));
+                window.location.href = 'register.html?mode=google';
+            } else {
+                // Existing user: Login
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = 'dashboard.html';
+            }
+        } else {
+            errorMsg.textContent = `❌ ${data.message || 'Google Login failed'}`;
+            errorMsg.style.display = 'block';
+        }
+    } catch (err) {
+        console.error("Google Auth Error:", err);
+        errorMsg.textContent = '❌ Google Auth connection failed.';
+        errorMsg.style.display = 'block';
+    }
+}
