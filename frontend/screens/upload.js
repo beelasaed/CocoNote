@@ -121,19 +121,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             } else {
                 const errorMessage = result.message || "Unknown error";
-                if (typeof showToast === 'function') {
-                    showToast("Upload failed: " + errorMessage);
-                } else {
-                    alert("⚠️ Error: " + errorMessage);
-                }
+                showUploadError(errorMessage);
             }
         } catch (err) {
             console.error("Submission Error:", err);
-            if (typeof showToast === 'function') {
-                showToast("Could not connect to the server.");
-            } else {
-                alert("Could not connect to the server.");
-            }
+            showUploadError("Could not connect to the server.");
         }
     });
 });
+
+function showUploadError(message) {
+    const errorMsg = document.getElementById('errorMsg');
+    if (errorMsg) {
+        errorMsg.textContent = message;
+        errorMsg.classList.remove('alert-warning', 'alert-success');
+        errorMsg.classList.add('alert-error', 'show');
+        errorMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // Also show toast/popup notification
+    if (typeof showToast === 'function') {
+        showToast("Upload failed: " + message);
+    } else {
+        alert("⚠️ Error: " + message);
+    }
+}

@@ -42,7 +42,7 @@ INSERT INTO badge(name, description, points_required) VALUES
 INSERT INTO users(name, student_id, email, password, batch, department_id, total_points) VALUES
 ('Anika Tabassum', '210041128', 'anika@iut-dhaka.edu', '$2a$10$dummyhash1', 21, 1, 3820),
 ('Samiul Hasan', '210041129', 'samiul@iut-dhaka.edu', '$2a$10$dummyhash2', 19, 2, 2450),
-('Fahim IUT', '190041101', 'fahim@iut-dhaka.edu', '$2a$10$dummyhash3', 20, 3, 1980);
+('Fahim Islam', '190041101', 'fahim@iut-dhaka.edu', '$2a$10$dummyhash3', 20, 3, 1980);
 
 -- 7. Sample Notes (UPDATED with description, batch, and department_id) --
 INSERT INTO note(title, description, batch, department_id, course_id, category_id, uploader_id, file_path, uploads, downloads, upvotes)

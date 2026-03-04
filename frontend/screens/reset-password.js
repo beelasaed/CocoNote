@@ -14,22 +14,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const confirmPassword = document.getElementById('confirmPassword').value;
 
             if (!email) {
-                messageBox.textContent = '❌ Session expired. Please request a new token.';
-                messageBox.style.color = 'red';
-                messageBox.style.display = 'block';
+                showMessage('⚠️ Session expired. Please request a new token.', 'error');
+                return;
+            }
+
+            // Validate new password
+            const passwordError = validatePassword(newPassword);
+            if (passwordError) {
+                showMessage(passwordError, 'error');
                 return;
             }
 
             if (newPassword !== confirmPassword) {
-                messageBox.textContent = '❌ Passwords do not match.';
-                messageBox.style.color = 'red';
-                messageBox.style.display = 'block';
+                showMessage('⚠️ Passwords do not match.', 'error');
                 return;
             }
 
-            messageBox.textContent = 'Updating...';
-            messageBox.style.color = 'blue';
-            messageBox.style.display = 'block';
+            showMessage('Updating your password...', 'warning');
 
             try {
                 const response = await fetch(`${API_URL}/reset-password`, {
@@ -41,8 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    messageBox.style.color = 'green';
-                    messageBox.textContent = '✅ Password reset successful! Redirecting to login...';
+                    showMessage('✓ Password reset successful! Redirecting to login...', 'success');
 
                     sessionStorage.removeItem('resetEmail');
 
@@ -50,14 +50,50 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.location.href = 'login.html';
                     }, 2000);
                 } else {
-                    messageBox.style.color = 'red';
-                    messageBox.textContent = `❌ ${data.message}`;
+                    showMessage(`⚠️ ${data.message}`, 'error');
                 }
             } catch (error) {
                 console.error("Reset Password Error:", error);
-                messageBox.style.color = 'red';
-                messageBox.textContent = '❌ Server connection failed.';
+                showMessage('⚠️ Server connection failed. Please try again.', 'error');
             }
         });
     }
 });
+
+function showMessage(text, type = 'error') {
+    const messageBox = document.getElementById('message');
+    messageBox.textContent = text;
+    
+    // Remove all alert type classes
+    messageBox.classList.remove('alert-error', 'alert-warning', 'alert-success');
+    
+    // Add the appropriate class
+    switch(type) {
+        case 'error':
+            messageBox.classList.add('alert-error');
+            break;
+        case 'warning':
+            messageBox.classList.add('alert-warning');
+            break;
+        case 'success':
+            messageBox.classList.add('alert-success');
+            break;
+        default:
+            messageBox.classList.add('alert-error');
+    }
+    
+    messageBox.classList.add('show');
+}
+
+function validatePassword(password) {
+    if (!password || password.length < 5) {
+        return '⚠️ Password must be at least 5 characters long';
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+        return '⚠️ Password must contain at least one letter';
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        return '⚠️ Password must contain at least one special character';
+    }
+    return null;
+}
