@@ -1,17 +1,11 @@
 -- ==========================================
 -- OPTIMIZED VIEWS FOR COCONOTE
 -- ==========================================
--- These views eliminate repeated query patterns and improve maintainability
--- All views produce EXACTLY the same results as the original queries
--- ==========================================
 
 -- ==========================================
 -- 1. NOTE_RATING_STATS
 -- ==========================================
--- WHY: Eliminates repeated AVG() and COUNT() subqueries across 6+ controllers
--- USED IN: getUserNotes, getNotesByUser, getNoteById, getSavedNotes, view_feed_details
--- SAFETY: Precomputes aggregations, results identical to original subqueries
--- PERFORMANCE: Eliminates correlated subqueries
+
 
 CREATE OR REPLACE VIEW note_rating_stats AS
 SELECT 
@@ -24,10 +18,7 @@ GROUP BY note_id;
 -- ==========================================
 -- 2. VIEW_FEED_DETAILS (OPTIMIZED)
 -- ==========================================
--- WHY: Original had correlated subqueries for ratings
--- CHANGED: Now uses note_rating_stats view (LEFT JOIN instead of subqueries)
--- SAFETY: Results identical, but dramatically faster
--- PERFORMANCE: Eliminates correlated subqueries
+
 
 CREATE OR REPLACE VIEW view_feed_details AS
 SELECT 
@@ -55,10 +46,7 @@ LEFT JOIN note_rating_stats nrs ON n.note_id = nrs.note_id;
 -- ==========================================
 -- 3. NOTE_WITH_DETAILS
 -- ==========================================
--- WHY: Eliminates duplicate LEFT JOIN patterns in getUserNotes, getNotesByUser, getSavedNotes
--- USED IN: To replace repeated query patterns with identical JOIN structure
--- SAFETY: Standardizes note retrieval logic, results identical
--- PERFORMANCE: Query planning is faster, eliminates code duplication
+
 
 CREATE OR REPLACE VIEW note_with_details AS
 SELECT 
@@ -89,10 +77,6 @@ LEFT JOIN note_rating_stats nrs ON n.note_id = nrs.note_id;
 -- ==========================================
 -- 4. USER_STATS
 -- ==========================================
--- WHY: Eliminates repeated user statistics queries
--- USED IN: getCurrentUser, getPublicUserProfile (both compute identical stats)
--- SAFETY: Results identical to original queries
--- PERFORMANCE: Centralizes user statistics logic
 
 CREATE OR REPLACE VIEW user_stats AS
 SELECT 

@@ -330,8 +330,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- Function to get related notes (Item-Item Collaborative Filtering Lite)
--- "Students who downloaded this also downloaded..."
+
 CREATE OR REPLACE FUNCTION get_related_notes(target_note_id INT, limit_count INT DEFAULT 5)
 RETURNS TABLE (
     note_id INT,

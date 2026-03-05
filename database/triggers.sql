@@ -133,9 +133,6 @@ BEGIN
         VALUES (_user_id, _badge_id)
         ON CONFLICT (user_id, badge_id) DO NOTHING;
         
-        -- If inserted (checked by found), create notification? 
-        -- Actually ON CONFLICT DO NOTHING returns nothing. 
-        -- Let's check existence first to trigger notification only on new assignment
         IF FOUND THEN
              -- Insert Notification
              INSERT INTO notification(recipient_user_id, actor_user_id, action_type, is_read)
@@ -146,8 +143,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- Helper: Better Notification Logic needs 'FOUND' from Insert, but 'ON CONFLICT' suppresses it.
--- Let's Refine Helper
+
 CREATE OR REPLACE FUNCTION assign_badge_if_not_exists(_user_id INT, _badge_name VARCHAR)
 RETURNS VOID AS $$
 DECLARE
@@ -161,11 +157,6 @@ BEGIN
         
         IF NOT _exists THEN
             INSERT INTO user_badge(user_id, badge_id) VALUES (_user_id, _badge_id);
-            
-            -- Send Notification
-            -- We don't have a specific actor for system events, so we can use the user themselves or specific system ID.
-            -- Using user_id as actor for self-achievements seems fine or NULL if schema allows.
-            -- Schema: actor_user_id is NOT NULL. So use user_id.
             INSERT INTO notification(recipient_user_id, actor_user_id, action_type, is_read)
             VALUES (_user_id, _user_id, 'badge_earned', FALSE);
         END IF;
@@ -191,10 +182,6 @@ AFTER INSERT ON download
 FOR EACH ROW EXECUTE FUNCTION update_user_stats_and_badges();
 
 
--- Keep Maintenance Triggers (Sync Note Counts)
--- These were in the original file (increment_note_downloads, adjust_note_upvotes).
--- We should keep them as they update the `note` table columns which we query above.
-
 CREATE OR REPLACE FUNCTION increment_note_downloads()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -208,11 +195,7 @@ CREATE TRIGGER trg_increment_download
 BEFORE INSERT ON download  
 FOR EACH ROW
 EXECUTE FUNCTION increment_note_downloads();
--- Changed to BEFORE or AFTER? 
--- Original was AFTER. stick to AFTER but ensure order doesn't conflict. 
--- Actually, update_user_stats_and_badges reads from `note`. 
--- If we use AFTER for both, order is alphabetical by trigger name.
--- Let's keep `increment_note_downloads` separate.
+
 
 CREATE OR REPLACE FUNCTION adjust_note_upvotes()
 RETURNS TRIGGER AS $$
@@ -231,6 +214,7 @@ CREATE TRIGGER trg_increment_upvote
 AFTER INSERT OR DELETE ON upvote
 FOR EACH ROW
 EXECUTE FUNCTION adjust_note_upvotes();
+
 -- Apply trigger to note_rating table
 DROP TRIGGER IF EXISTS trg_update_stats_rating ON note_rating;
 CREATE TRIGGER trg_update_stats_rating
